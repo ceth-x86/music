@@ -1,15 +1,17 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
+
+var Service string
+var Id string
 
 // addPlaylistCmd represents the addPlaylist command
 var addPlaylistCmd = &cobra.Command{
 	Use:   "addPlaylist",
-	Short: "A brief description of your command",
+	Short: "Add new playlist",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -17,20 +19,17 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("addPlaylist called")
+
+		sugar := zap.NewExample().Sugar()
+		defer sugar.Sync()
+		sugar.Infow("adding playlist",
+			"service", Service,
+			"id", Id)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(addPlaylistCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// addPlaylistCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// addPlaylistCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	addPlaylistCmd.Flags().StringVarP(&Service, "service", "s", "", "Music service")
+	addPlaylistCmd.Flags().StringVarP(&Id, "id", "i", "", "Playlist id")
 }
