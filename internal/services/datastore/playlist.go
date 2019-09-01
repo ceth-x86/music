@@ -7,6 +7,7 @@ import (
 )
 
 type IPlaylistRepository interface {
+	Fetch() []*core.Playlist
 	Store(p *core.Playlist) (*core.Playlist, error)
 }
 
@@ -26,6 +27,13 @@ func setPlaylistFields(p db.Playlist, playlist *core.Playlist) db.Playlist {
 	p.TrackCount = playlist.TrackCount
 	p.LastChanged = playlist.LastChanged
 	return p
+}
+
+func (r *PlaylistRepository) Fetch() []*core.Playlist {
+
+	var result []*core.Playlist
+	r.db.Where("deleted_at is null").Find(&result)
+	return result
 }
 
 func (r *PlaylistRepository) Store(p *core.Playlist) (*core.Playlist, error) {

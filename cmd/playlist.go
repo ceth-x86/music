@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	settings2 "github.com/demas/music/internal/services/settings"
 
 	"github.com/demas/music/internal/models/core"
@@ -57,6 +59,35 @@ var addPlaylistCommand = &cobra.Command{
 	},
 }
 
+var listPlaylistCommand = &cobra.Command{
+	Use:   "list",
+	Short: "Show playlists",
+	Long: `Examples:
+		playlist show
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		logger := zap.NewExample().Sugar()
+		defer func() {
+			_ = logger.Sync()
+		}()
+
+		logger.Infow("show list of playlists")
+
+		settings := settings2.InitSettings()
+		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
+		}
+
+		repository := datastore.NewPlaylistRepository(db)
+		for _, playlist := range repository.Fetch() {
+			fmt.Println(playlist.Service, playlist.Id)
+		}
+
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(playistCmd)
 
@@ -65,4 +96,6 @@ func init() {
 	addPlaylistCommand.Flags().StringVarP(&Id, "id", "i", "", "Playlist id")
 	_ = addPlaylistCommand.MarkFlagRequired("service")
 	_ = addPlaylistCommand.MarkFlagRequired("id")
+
+	playistCmd.AddCommand(listPlaylistCommand)
 }
