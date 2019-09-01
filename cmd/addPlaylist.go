@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"github.com/demas/music/internal/models/core"
+	"github.com/demas/music/internal/services/datastore"
+	"github.com/demas/music/internal/services/datastore/dbutils"
+	appSettings "github.com/demas/music/internal/services/settings"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -12,19 +16,36 @@ var Id string
 var addPlaylistCmd = &cobra.Command{
 	Use:   "addPlaylist",
 	Short: "Add new playlist",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long: `Add new playlist. Examples:
+		addPlaylist --service spoify --id dAKJ23K4H234
+		addPlaylist --service deezer --id 23424
+		addPlaylist --service yandex --id 3123123123
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		sugar := zap.NewExample().Sugar()
-		defer sugar.Sync()
-		sugar.Infow("adding playlist",
+		logger := zap.NewExample().Sugar()
+		defer func() {
+			_ = logger.Sync()
+		}()
+
+		logger.Infow("adding playlist",
 			"service", Service,
 			"id", Id)
+
+		settings := appSettings.InitSettings()
+		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
+		}
+
+		repository := datastore.NewPlaylistRepository(db)
+		_, err = repository.Store(&core.Playlist{
+			Service:    Service,
+			PlaylistId: Id,
+		})
+		if err != nil {
+			logger.With(zap.Error(err)).Error("не удалось создать плейлист")
+		}
 	},
 }
 
