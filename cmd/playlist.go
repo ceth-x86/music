@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/alexeyco/simpletable"
+
 	settings2 "github.com/demas/music/internal/services/settings"
 
 	"github.com/demas/music/internal/models/core"
@@ -81,10 +83,25 @@ var listPlaylistCommand = &cobra.Command{
 		}
 
 		repository := datastore.NewPlaylistRepository(db)
-		for _, playlist := range repository.Fetch() {
-			fmt.Println(playlist.Service, playlist.Id)
-		}
 
+		table := simpletable.New()
+		table.Header = &simpletable.Header{
+			Cells: []*simpletable.Cell{
+				{Align: simpletable.AlignCenter, Text: "Id"},
+				{Align: simpletable.AlignCenter, Text: "Service"},
+				{Align: simpletable.AlignCenter, Text: "PlaylistId"},
+			}}
+
+		for _, playlist := range repository.Fetch() {
+			r := []*simpletable.Cell{
+				{Text: fmt.Sprintf("%d", playlist.Id)},
+				{Align: simpletable.AlignCenter, Text: playlist.Service},
+				{Text: playlist.PlaylistId},
+			}
+			table.Body.Cells = append(table.Body.Cells, r)
+		}
+		table.SetStyle(simpletable.StyleCompactLite)
+		fmt.Println(table.String())
 	},
 }
 
