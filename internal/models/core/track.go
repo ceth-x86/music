@@ -1,6 +1,6 @@
 package core
 
-type PlaylistTrack struct {
+type Track struct {
 	Id         uint
 	PlaylistId uint
 	Name       string
