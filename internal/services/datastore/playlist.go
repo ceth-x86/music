@@ -1,6 +1,8 @@
 package datastore
 
 import (
+	"errors"
+
 	"github.com/demas/music/internal/models/core"
 	"github.com/demas/music/internal/models/db"
 	"github.com/jinzhu/gorm"
@@ -8,6 +10,7 @@ import (
 
 type IPlaylistRepository interface {
 	Fetch() []*core.Playlist
+	GetById(id uint) (*core.Playlist, error)
 	Store(p *core.Playlist) (*core.Playlist, error)
 }
 
@@ -34,6 +37,15 @@ func (r *PlaylistRepository) Fetch() []*core.Playlist {
 	var result []*core.Playlist
 	r.db.Where("deleted_at is null").Find(&result)
 	return result
+}
+
+func (r *PlaylistRepository) GetById(id uint) (*core.Playlist, error) {
+	result := &core.Playlist{}
+	r.db.First(&result, id)
+	if result.Id == 0 {
+		return nil, errors.New("record not found")
+	}
+	return result, nil
 }
 
 func (r *PlaylistRepository) Store(p *core.Playlist) (*core.Playlist, error) {
