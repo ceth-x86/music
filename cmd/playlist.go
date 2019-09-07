@@ -2,6 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
+
+	"github.com/demas/music/internal/models/enums"
+
+	engine2 "github.com/demas/music/internal/services/engine"
+
+	repository2 "github.com/demas/music/internal/services/datastore/repository"
 
 	"github.com/alexeyco/simpletable"
 
@@ -50,9 +57,14 @@ var addPlaylistCommand = &cobra.Command{
 			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
 		}
 
+		musicService, err := enums.ParseMusicService(Service)
+		if err != nil {
+			logger.With(zap.Error(err)).Fatal("Не удалось определить музыкальный сервис")
+		}
+
 		repository := datastore.NewPlaylistRepository(db)
 		_, err = repository.Store(&core.Playlist{
-			Service:    Service,
+			Service:    uint(musicService),
 			PlaylistId: Id,
 		})
 		if err != nil {
@@ -95,13 +107,47 @@ var listPlaylistCommand = &cobra.Command{
 		for _, playlist := range repository.Fetch() {
 			r := []*simpletable.Cell{
 				{Text: fmt.Sprintf("%d", playlist.Id)},
-				{Align: simpletable.AlignCenter, Text: playlist.Service},
+				{Align: simpletable.AlignCenter, Text: enums.MusicService(playlist.Service).String()},
 				{Text: playlist.PlaylistId},
 			}
 			table.Body.Cells = append(table.Body.Cells, r)
 		}
 		table.SetStyle(simpletable.StyleCompactLite)
 		fmt.Println(table.String())
+	},
+}
+
+var syncPlaylistCommand = &cobra.Command{
+	Use:   "sync",
+	Short: "Sync one playlist",
+	Long: `Examples:
+		playlist sync --id 2
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		logger := zap.NewExample().Sugar()
+		defer func() {
+			_ = logger.Sync()
+		}()
+
+		logger.Infow("Sync playlist",
+			"PlaylistId", Id)
+
+		idUint, err := strconv.ParseUint(Id, 10, 32)
+		if err != nil {
+			logger.With(zap.Error(err)).Errorw("Не удалось преобразовать идентификатор плейлиста в число",
+				"Id", Id)
+		}
+
+		settings := settings2.InitSettings()
+		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
+		}
+
+		repository := repository2.NewRepository(db)
+		engine := engine2.NewEngine(repository)
+		engine.DownloadPlaylist(uint(idUint))
 	},
 }
 
@@ -113,6 +159,10 @@ func init() {
 	addPlaylistCommand.Flags().StringVarP(&Id, "id", "i", "", "Playlist id")
 	_ = addPlaylistCommand.MarkFlagRequired("service")
 	_ = addPlaylistCommand.MarkFlagRequired("id")
+
+	playistCmd.AddCommand(syncPlaylistCommand)
+	syncPlaylistCommand.Flags().StringVarP(&Id, "id", "i", "", "Playlist id")
+	_ = syncPlaylistCommand.MarkFlagRequired("id")
 
 	playistCmd.AddCommand(listPlaylistCommand)
 }
