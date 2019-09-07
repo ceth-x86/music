@@ -6,7 +6,7 @@ import (
 
 type Playlist struct {
 	Id          uint
-	Service     string
+	Service     uint
 	PlaylistId  string
 	TrackCount  *uint
 	LastChanged *time.Time
