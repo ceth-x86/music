@@ -38,15 +38,17 @@ func (s *Spotify) DownloadPlaylist(playlistId string) (*core.Playlist, []*core.T
 	//}()
 
 	// понадобится позже для заполнения полей Плейлиста
-	_, err := s.Client.GetPlaylist(spotify.ID(playlistId))
+	spotifyPlaylist, err := s.Client.GetPlaylist(spotify.ID(playlistId))
 	if err != nil {
 		logger.With(zap.Error(err)).Error("error getting playlist from spotify")
 		return nil, nil, err
 	}
 
 	playlist := &core.Playlist{
-		Service:    uint(enums.MusicServiceSpotify),
-		PlaylistId: playlistId,
+		Service:     uint(enums.MusicServiceSpotify),
+		PlaylistId:  playlistId,
+		Name:        spotifyPlaylist.Name,
+		Description: spotifyPlaylist.Description,
 	}
 
 	var tracks []*core.Track

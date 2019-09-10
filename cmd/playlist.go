@@ -102,6 +102,8 @@ var listPlaylistCommand = &cobra.Command{
 				{Align: simpletable.AlignCenter, Text: "Id"},
 				{Align: simpletable.AlignCenter, Text: "Service"},
 				{Align: simpletable.AlignCenter, Text: "PlaylistId"},
+				{Align: simpletable.AlignCenter, Text: "Name"},
+				{Align: simpletable.AlignCenter, Text: "Description"},
 			}}
 
 		for _, playlist := range repository.Fetch() {
@@ -109,6 +111,8 @@ var listPlaylistCommand = &cobra.Command{
 				{Text: fmt.Sprintf("%d", playlist.Id)},
 				{Align: simpletable.AlignCenter, Text: enums.MusicService(playlist.Service).String()},
 				{Text: playlist.PlaylistId},
+				{Text: playlist.Name},
+				{Text: playlist.Description},
 			}
 			table.Body.Cells = append(table.Body.Cells, r)
 		}

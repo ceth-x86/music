@@ -12,6 +12,7 @@ type IPlaylistRepository interface {
 	Fetch() []*core.Playlist
 	GetById(id uint) (*core.Playlist, error)
 	Store(p *core.Playlist) (*core.Playlist, error)
+	Update(id uint, p *core.Playlist) (*core.Playlist, error)
 }
 
 type PlaylistRepository struct {
@@ -27,6 +28,8 @@ func NewPlaylistRepository(dbHandler *gorm.DB) *PlaylistRepository {
 func setPlaylistFields(p db.Playlist, playlist *core.Playlist) db.Playlist {
 	p.Service = playlist.Service
 	p.PlaylistId = playlist.PlaylistId
+	p.Name = playlist.Name
+	p.Description = playlist.Description
 	p.TrackCount = playlist.TrackCount
 	p.LastChanged = playlist.LastChanged
 	return p
@@ -55,5 +58,16 @@ func (r *PlaylistRepository) Store(p *core.Playlist) (*core.Playlist, error) {
 		return nil, err
 	}
 	p.Id = playlist.ID
+	return p, nil
+}
+
+func (r *PlaylistRepository) Update(id uint, p *core.Playlist) (*core.Playlist, error) {
+
+	playlist := db.Playlist{}
+	r.db.First(&playlist, id)
+	playlist = setPlaylistFields(playlist, p)
+	if err := r.db.Save(&playlist).Error; err != nil {
+		return nil, err
+	}
 	return p, nil
 }

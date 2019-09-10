@@ -28,10 +28,17 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 		return
 	}
 
-	_, tracks, err :=
+	servicePlaylist, tracks, err :=
 		musicservices.NewMusicService(playlist.Service).DownloadPlaylist(playlist.PlaylistId)
 	if err != nil {
 		logger.With(zap.Error(err)).Error(err)
+	}
+
+	playlist.Name = servicePlaylist.Name
+	playlist.Description = servicePlaylist.Description
+	_, err = e.DataRepository.PlaylistRepository.Update(playlistId, playlist)
+	if err != nil {
+		logger.With(zap.Error(err)).Error("не удалось обновить плейлист")
 	}
 
 	for _, track := range tracks {
