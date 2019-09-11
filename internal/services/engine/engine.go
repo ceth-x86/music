@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"time"
+
 	"github.com/demas/music/internal/services/datastore/repository"
 	"github.com/demas/music/internal/services/musicservices"
 	"go.uber.org/zap"
@@ -34,13 +36,7 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 		logger.With(zap.Error(err)).Error(err)
 	}
 
-	playlist.Name = servicePlaylist.Name
-	playlist.Description = servicePlaylist.Description
-	_, err = e.DataRepository.PlaylistRepository.Update(playlistId, playlist)
-	if err != nil {
-		logger.With(zap.Error(err)).Error("не удалось обновить плейлист")
-	}
-
+	var playlistWasUpdated = false
 	for _, track := range tracks {
 		track.PlaylistId = playlistId
 
@@ -50,7 +46,20 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 			if err != nil {
 				logger.With(zap.Error(err)).Errorw("не удалось сохранить трек")
 			}
+			playlistWasUpdated = true
 		}
 
+	}
+
+	playlist.Name = servicePlaylist.Name
+	playlist.Description = servicePlaylist.Description
+	if playlistWasUpdated {
+		t := time.Now()
+		playlist.LastChanged = &t
+	}
+
+	_, err = e.DataRepository.PlaylistRepository.Update(playlistId, playlist)
+	if err != nil {
+		logger.With(zap.Error(err)).Error("не удалось обновить плейлист")
 	}
 }
