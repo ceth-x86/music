@@ -43,9 +43,14 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 
 	for _, track := range tracks {
 		track.PlaylistId = playlistId
-		_, err = e.DataRepository.TrackRepository.Store(track)
+
+		_, err := e.DataRepository.TrackRepository.GetByPlaylistAndTrackId(playlistId, track.TrackId)
 		if err != nil {
-			logger.With(zap.Error(err)).Errorw("не удалось сохранить трек")
+			_, err = e.DataRepository.TrackRepository.Store(track)
+			if err != nil {
+				logger.With(zap.Error(err)).Errorw("не удалось сохранить трек")
+			}
 		}
+
 	}
 }
