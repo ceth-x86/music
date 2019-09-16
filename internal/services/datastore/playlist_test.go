@@ -68,6 +68,23 @@ func (suite *Suite) TestGetPlaylistById() {
 	require.NoError(suite.T(), err)
 }
 
+func (suite *Suite) TestStore() {
+
+	var (
+		returnId   uint = 1
+		service    uint = 1
+		playlistId      = "123"
+	)
+
+	suite.mock.ExpectBegin()
+	suite.mock.ExpectQuery(`^INSERT INTO "playlists"`).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(returnId))
+	suite.mock.ExpectCommit()
+
+	_, err := suite.repository.Store(&core.Playlist{Service: service, PlaylistId: playlistId})
+	require.NoError(suite.T(), err)
+}
+
 func TestExampleTestSuite(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
