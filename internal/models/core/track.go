@@ -5,7 +5,9 @@ type Track struct {
 	PlaylistId uint
 	Name       string
 	TrackId    string
-	//Artist           string
-	//ArtistId         string
-	//Album            string
+	ArtistId   uint
+	AlbumId    uint
+
+	ServiceArtistId string
+	ServiceAlbumId  string
 }

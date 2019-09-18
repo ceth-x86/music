@@ -25,8 +25,10 @@ func (s *Spotify) options(offset int, limit int) *spotify.Options {
 func convertTrack(spotifyTrack *spotify.PlaylistTrack) *core.Track {
 	return &core.Track{
 		// PlaylistId: 0,
-		Name:    spotifyTrack.Track.Name,
-		TrackId: string(spotifyTrack.Track.ID),
+		Name:            spotifyTrack.Track.Name,
+		TrackId:         string(spotifyTrack.Track.ID),
+		ServiceAlbumId:  string(spotifyTrack.Track.Album.ID),
+		ServiceArtistId: string(spotifyTrack.Track.Artists[0].ID),
 	}
 }
 
