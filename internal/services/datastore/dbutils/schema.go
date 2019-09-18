@@ -30,8 +30,11 @@ func OpenDbConnection(connectionString string, logSql bool) (*gorm.DB, error) {
 
 func applyAutoMigrations(dbs *gorm.DB) {
 	dbs.AutoMigrate(
+		&db.Artist{},
+		&db.Album{},
 		&db.Playlist{},
-		&db.Track{})
+		&db.Track{},
+	)
 }
 
 func getClient(connectionString string) (*gorm.DB, error) {
