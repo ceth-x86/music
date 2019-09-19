@@ -8,6 +8,8 @@ import (
 )
 
 type IMusicService interface {
+	DownloadAlbum(albumId string) (*core.Album, error)
+	DownloadArtist(artistId string) (*core.Artist, error)
 	DownloadPlaylist(playlistId string) (*core.Playlist, []*core.Track, error)
 }
 

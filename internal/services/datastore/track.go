@@ -27,6 +27,8 @@ func setTrackFields(t db.Track, track *core.Track) db.Track {
 	t.PlaylistId = track.PlaylistId
 	t.Name = track.Name
 	t.TrackId = track.TrackId
+	t.AlbumId = track.AlbumId
+	t.ArtistId = track.ArtistId
 	return t
 }
 

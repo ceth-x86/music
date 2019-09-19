@@ -3,8 +3,6 @@ package engine
 import (
 	"time"
 
-	"github.com/demas/music/internal/models/core"
-
 	"github.com/demas/music/internal/services/datastore/repository"
 	"github.com/demas/music/internal/services/musicservices"
 	"go.uber.org/zap"
@@ -32,8 +30,9 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 		return
 	}
 
-	servicePlaylist, tracks, err :=
-		musicservices.NewMusicService(playlist.Service).DownloadPlaylist(playlist.PlaylistId)
+	musicService := musicservices.NewMusicService(playlist.Service)
+
+	servicePlaylist, tracks, err := musicService.DownloadPlaylist(playlist.PlaylistId)
 	if err != nil {
 		logger.With(zap.Error(err)).Error(err)
 	}
@@ -45,30 +44,49 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 		_, err := e.DataRepository.TrackRepository.GetByPlaylistAndTrackId(playlistId, track.TrackId)
 		if err != nil {
 
-			// TODO: refactore
+			// artist
 			artist, err := e.DataRepository.ArtistRepository.GetByArtistId(track.ServiceArtistId)
 			if err != nil {
-				artist, err = e.DataRepository.ArtistRepository.Store(&core.Artist{ArtistId: track.ServiceArtistId})
+
+				artist, err = musicService.DownloadArtist(track.ServiceArtistId)
+				if err != nil {
+					logger.With(zap.Error(err)).Errorw("не удалось получить исполнителя на музыкальном сервисе",
+						"Track.ServiceId", track.TrackId,
+						"Track.PlaylistId", track.PlaylistId,
+						"Track.ArtistId", track.ServiceArtistId)
+					continue
+				}
+
+				artist, err = e.DataRepository.ArtistRepository.Store(artist)
 				if err != nil {
 					logger.With(zap.Error(err)).Errorw("не удалось сохранить исполнителя",
 						"Track.ServiceId", track.TrackId,
 						"Track.PlaylistId", track.PlaylistId,
 						"Track.ArtistId", track.ServiceArtistId)
-					// TODO: refactore
-					panic(err)
+					continue
 				}
 			}
 
+			// album
 			album, err := e.DataRepository.AlbumRepository.GetByAlbumId(track.ServiceAlbumId)
 			if err != nil {
-				album, err = e.DataRepository.AlbumRepository.Store(&core.Album{AlbumId: track.ServiceAlbumId})
+
+				album, err = musicService.DownloadAlbum(track.ServiceAlbumId)
+				if err != nil {
+					logger.With(zap.Error(err)).Errorw("не удалось получить альбом на музыкальном сервисе",
+						"Track.ServiceId", track.TrackId,
+						"Track.PlaylistId", track.PlaylistId,
+						"Track.AlbumId", track.ServiceAlbumId)
+					continue
+				}
+
+				album, err = e.DataRepository.AlbumRepository.Store(album)
 				if err != nil {
 					logger.With(zap.Error(err)).Errorw("не удалось сохранить альбом",
 						"Track.ServiceId", track.TrackId,
 						"Track.PlaylistId", track.PlaylistId,
 						"Track.AlbumId", track.ServiceAlbumId)
-					// TODO: refactore
-					panic(err)
+					continue
 				}
 			}
 
