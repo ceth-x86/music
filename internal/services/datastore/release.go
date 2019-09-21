@@ -7,6 +7,7 @@ import (
 )
 
 type IReleaseRepository interface {
+	Fetch() []*core.Release
 	Store(p *core.Release) (*core.Release, error)
 }
 
@@ -24,6 +25,22 @@ func setReleaseFields(r db.Release, release *core.Release) db.Release {
 	r.AlbumId = release.AlbumId
 	r.SyncDate = release.SyncDate
 	return r
+}
+
+func (r *ReleaseRepository) Fetch() []*core.Release {
+
+	var result []*core.Release
+
+	r.db.Select("releases.*, " +
+		"albums.name as album_name, albums.album_type as album_type, " +
+		"artists.name as artist_name, artists.genres").
+		Table("releases").
+		Joins("JOIN albums ON releases.album_id = albums.id").
+		Joins("JOIN artists ON albums.artist_id = artists.id").
+		Where("releases.deleted_at is null").
+		Find(&result)
+
+	return result
 }
 
 func (r *ReleaseRepository) Store(rl *core.Release) (*core.Release, error) {

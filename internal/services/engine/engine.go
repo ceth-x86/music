@@ -82,6 +82,7 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 						"Track.AlbumId", track.ServiceAlbumId)
 					continue
 				}
+				album.ArtistId = artist.Id
 
 				album, err = e.DataRepository.AlbumRepository.Store(album)
 				if err != nil {
