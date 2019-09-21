@@ -5,4 +5,5 @@ type Artist struct {
 	Name       string
 	ArtistId   string
 	Popularity int
+	Genres     string
 }

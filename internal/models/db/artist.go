@@ -7,4 +7,5 @@ type Artist struct {
 	ArtistId   string `gorm:"unique_index"`
 	Name       string
 	Popularity int
+	Genres     string
 }

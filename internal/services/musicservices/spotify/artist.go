@@ -1,6 +1,8 @@
 package spotify
 
 import (
+	"strings"
+
 	"github.com/demas/music/internal/models/core"
 	"github.com/zmb3/spotify"
 	"go.uber.org/zap"
@@ -19,6 +21,7 @@ func (s *Spotify) DownloadArtist(artistId string) (*core.Artist, error) {
 		Name:       spotifyArtist.Name,
 		ArtistId:   artistId,
 		Popularity: spotifyArtist.Popularity,
+		Genres:     strings.Join(spotifyArtist.Genres, ","),
 	}
 
 	return artist, nil

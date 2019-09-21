@@ -28,6 +28,7 @@ func setArtistFields(a db.Artist, artist *core.Artist) db.Artist {
 	a.ArtistId = artist.ArtistId
 	a.Name = artist.Name
 	a.Popularity = artist.Popularity
+	a.Genres = artist.Genres
 	return a
 }
 
