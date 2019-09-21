@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"fmt"
 	"time"
+
+	"github.com/demas/music/internal/models/core"
 
 	"github.com/demas/music/internal/services/datastore/repository"
 	"github.com/demas/music/internal/services/musicservices"
@@ -87,6 +90,24 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 						"Track.PlaylistId", track.PlaylistId,
 						"Track.AlbumId", track.ServiceAlbumId)
 					continue
+				}
+
+				// если вышло не позже месяца, то считаем, что это новинка
+				d := time.Now().Sub(album.ReleaseDate).Hours()
+				fmt.Println(d)
+				if time.Now().Sub(album.ReleaseDate).Hours() < 24*30 {
+					_, err := e.DataRepository.ReleaseRepository.Store(&core.Release{
+						AlbumId:  album.Id,
+						SyncDate: time.Now(),
+					})
+
+					if err != nil {
+						logger.With(zap.Error(err)).Errorw("не удалось сохранить релиз",
+							"Track.ServiceId", track.TrackId,
+							"Track.PlaylistId", track.PlaylistId,
+							"Track.AlbumId", track.ServiceAlbumId)
+						continue
+					}
 				}
 			}
 

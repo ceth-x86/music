@@ -9,6 +9,7 @@ type Repository struct {
 	AlbumRepository    datastore.IAlbumRepository
 	ArtistRepository   datastore.IArtistRepository
 	PlaylistRepository datastore.IPlaylistRepository
+	ReleaseRepository  datastore.IReleaseRepository
 	TrackRepository    datastore.ITrackRepository
 }
 
@@ -17,6 +18,7 @@ func NewRepository(dbHandler *gorm.DB) *Repository {
 		AlbumRepository:    datastore.NewAlbumRepository(dbHandler),
 		ArtistRepository:   datastore.NewArtistRepository(dbHandler),
 		PlaylistRepository: datastore.NewPlaylistRepository(dbHandler),
+		ReleaseRepository:  datastore.NewReleaseRepository(dbHandler),
 		TrackRepository:    datastore.NewTrackRepository(dbHandler),
 	}
 }

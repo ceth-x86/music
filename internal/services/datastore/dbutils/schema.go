@@ -34,6 +34,7 @@ func applyAutoMigrations(dbs *gorm.DB) {
 		&db.Album{},
 		&db.Playlist{},
 		&db.Track{},
+		&db.Release{},
 	)
 }
 
