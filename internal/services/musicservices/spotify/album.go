@@ -17,8 +17,11 @@ func (s *Spotify) DownloadAlbum(albumId string) (*core.Album, error) {
 	}
 
 	album := &core.Album{
-		Name:    spotifyAlbum.Name,
-		AlbumId: albumId,
+		Name:        spotifyAlbum.Name,
+		AlbumId:     albumId,
+		Popularity:  spotifyAlbum.Popularity,
+		AlbumType:   spotifyAlbum.AlbumType,
+		ReleaseDate: spotifyAlbum.ReleaseDateTime(),
 	}
 
 	return album, nil

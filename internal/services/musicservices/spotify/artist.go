@@ -16,8 +16,9 @@ func (s *Spotify) DownloadArtist(artistId string) (*core.Artist, error) {
 	}
 
 	artist := &core.Artist{
-		Name:     spotifyArtist.Name,
-		ArtistId: artistId,
+		Name:       spotifyArtist.Name,
+		ArtistId:   artistId,
+		Popularity: spotifyArtist.Popularity,
 	}
 
 	return artist, nil

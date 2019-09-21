@@ -1,7 +1,8 @@
 package core
 
 type Artist struct {
-	Id       uint
-	Name     string
-	ArtistId string
+	Id         uint
+	Name       string
+	ArtistId   string
+	Popularity int
 }

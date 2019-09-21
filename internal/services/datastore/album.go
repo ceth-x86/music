@@ -27,6 +27,9 @@ func NewAlbumRepository(dbHandler *gorm.DB) *AlbumRepository {
 func setAlbumFields(a db.Album, album *core.Album) db.Album {
 	a.AlbumId = album.AlbumId
 	a.Name = album.Name
+	a.Popularity = album.Popularity
+	a.ReleaseDate = album.ReleaseDate
+	a.AlbumType = album.AlbumType
 	return a
 }
 
