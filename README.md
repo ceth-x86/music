@@ -32,12 +32,12 @@ Id        Artist                 Album            Type                          
 
 ### CLI commands
 
-| Command        | Description            |
-| -------------- | ---------------------- |
-| playlist add   | Add playlist           |
-| playlist list  | Show list of playlists |
-| playlist sync  | Sync playlists         |
-| release list   | Show list of releases  |
+| Command        | Description            | Examples                                                   |
+| -------------- | ---------------------- | ---------------------------------------------------------- |
+| playlist add   | Add playlist           | playlist add --service spotify --id 37i9dQZF1DXcF6B6QPhFDv | 
+| playlist list  | Show list of playlists | playlist list                                              |
+| playlist sync  | Sync playlists         | playlist sync, playlist sync --id 4                        |
+| release list   | Show list of releases  | release list                                               |
 
 ## Roadmap
 

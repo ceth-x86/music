@@ -123,8 +123,9 @@ var listPlaylistCommand = &cobra.Command{
 
 var syncPlaylistCommand = &cobra.Command{
 	Use:   "sync",
-	Short: "Sync one playlist",
+	Short: "Sync playlists",
 	Long: `Examples:
+        playlist sync
 		playlist sync --id 2
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -134,14 +135,7 @@ var syncPlaylistCommand = &cobra.Command{
 			_ = logger.Sync()
 		}()
 
-		logger.Infow("Sync playlist",
-			"PlaylistId", Id)
-
-		idUint, err := strconv.ParseUint(Id, 10, 32)
-		if err != nil {
-			logger.With(zap.Error(err)).Errorw("Не удалось преобразовать идентификатор плейлиста в число",
-				"Id", Id)
-		}
+		logger.Infow("Sync playlist")
 
 		settings := settings2.InitSettings()
 		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
@@ -151,7 +145,24 @@ var syncPlaylistCommand = &cobra.Command{
 
 		repository := repository2.NewRepository(db)
 		engine := engine2.NewEngine(repository)
-		engine.DownloadPlaylist(uint(idUint))
+
+		if Id != "" {
+
+			logger.Infow("  Id = ", Id)
+			idUint, err := strconv.ParseUint(Id, 10, 32)
+			if err != nil {
+				logger.With(zap.Error(err)).Errorw("Не удалось преобразовать идентификатор плейлиста в число",
+					"Id", Id)
+			}
+
+			engine.DownloadPlaylist(uint(idUint))
+		} else {
+
+			logger.Info("  all playlists")
+			for _, playlist := range repository.PlaylistRepository.Fetch() {
+				engine.DownloadPlaylist(playlist.Id)
+			}
+		}
 	},
 }
 
@@ -166,7 +177,6 @@ func init() {
 
 	playistCmd.AddCommand(syncPlaylistCommand)
 	syncPlaylistCommand.Flags().StringVarP(&Id, "id", "i", "", "Playlist id")
-	_ = syncPlaylistCommand.MarkFlagRequired("id")
 
 	playistCmd.AddCommand(listPlaylistCommand)
 }

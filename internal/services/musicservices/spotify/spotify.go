@@ -66,6 +66,10 @@ func (s *Spotify) DownloadPlaylist(playlistId string) (*core.Playlist, []*core.T
 		total = spotifyTracks.Total
 
 		for _, spotifyTrack := range spotifyTracks.Tracks {
+			// sometimes we have such tracks from Spotify
+			if spotifyTrack.Track.ID == "" {
+				continue
+			}
 			tracks = append(tracks, convertTrack(&spotifyTrack))
 		}
 
