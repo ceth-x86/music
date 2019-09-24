@@ -13,25 +13,17 @@ func NewEngine(dataRepository *repository.Repository) *Engine {
 }
 
 type DownloadError struct {
-	InnerError error
+	Cause error
 }
 
 func (e *DownloadError) Error() string {
-	return e.InnerError.Error()
-}
-
-func NewDownloadError(e error) *DownloadError {
-	return &DownloadError{InnerError: e}
+	return e.Cause.Error()
 }
 
 type StoreError struct {
-	InnerError error
+	Cause error
 }
 
 func (e *StoreError) Error() string {
-	return e.InnerError.Error()
-}
-
-func NewStoreError(e error) *StoreError {
-	return &StoreError{InnerError: e}
+	return e.Cause.Error()
 }

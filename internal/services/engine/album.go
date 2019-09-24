@@ -13,12 +13,12 @@ func (e *Engine) returnOrCreateAlbum(musicService musicservices.IMusicService, s
 
 		album, err = musicService.DownloadAlbum(serviceAlbumId)
 		if err != nil {
-			return nil, false, NewDownloadError(err)
+			return nil, false, &DownloadError{Cause: err}
 		}
 
 		album, err = e.DataRepository.AlbumRepository.Store(album)
 		if err != nil {
-			return nil, false, NewStoreError(err)
+			return nil, false, &StoreError{Cause: err}
 		}
 
 		return album, true, nil

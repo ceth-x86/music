@@ -11,12 +11,12 @@ func (e *Engine) returnOrCreateArtist(musicService musicservices.IMusicService, 
 	if err != nil {
 		artist, err = musicService.DownloadArtist(serviceArtistId)
 		if err != nil {
-			return nil, NewDownloadError(err)
+			return nil, &DownloadError{Cause: err}
 		}
 
 		artist, err = e.DataRepository.ArtistRepository.Store(artist)
 		if err != nil {
-			return nil, NewStoreError(err)
+			return nil, &StoreError{Cause: err}
 		}
 	}
 
