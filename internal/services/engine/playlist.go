@@ -9,16 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const daysForRelease = 30
-
-func isItNewRelease(releaseDate time.Time) bool {
-	if time.Now().Sub(releaseDate).Hours() < 24*daysForRelease {
-		return true
-	}
-
-	return false
-}
-
 func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicservices.IMusicService) (wasSaved bool) {
 
 	logger := zap.NewExample().Sugar()
