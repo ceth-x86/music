@@ -8,6 +8,7 @@ import (
 
 type IReleaseRepository interface {
 	Fetch() []*core.Release
+	GetByAlbumType(albumType string) []*core.Release
 	Store(p *core.Release) (*core.Release, error)
 }
 
@@ -37,6 +38,24 @@ func (r *ReleaseRepository) Fetch() []*core.Release {
 		Table("releases").
 		Joins("JOIN albums ON releases.album_id = albums.id").
 		Joins("JOIN artists ON albums.artist_id = artists.id").
+		Where("releases.deleted_at is null").
+		Order("releases.sync_date").
+		Find(&result)
+
+	return result
+}
+
+func (r *ReleaseRepository) GetByAlbumType(albumType string) []*core.Release {
+
+	var result []*core.Release
+
+	r.db.Select("releases.*, "+
+		"albums.name as album_name, albums.album_type as album_type, "+
+		"artists.name as artist_name, artists.genres").
+		Table("releases").
+		Joins("JOIN albums ON releases.album_id = albums.id").
+		Joins("JOIN artists ON albums.artist_id = artists.id").
+		Where("albums.album_type = ?", albumType).
 		Where("releases.deleted_at is null").
 		Order("releases.sync_date").
 		Find(&result)

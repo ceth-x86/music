@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/demas/music/internal/models/core"
+
 	"github.com/alexeyco/simpletable"
 
 	settings2 "github.com/demas/music/internal/services/settings"
@@ -13,6 +15,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
+
+var AlbumType string
 
 var releaseCmd = &cobra.Command{
 	Use:   "release",
@@ -42,6 +46,16 @@ var listReleaseCommand = &cobra.Command{
 
 		repository := datastore.NewReleaseRepository(db)
 
+		var releases []*core.Release
+		if AlbumType == "" {
+			releases = repository.Fetch()
+		} else if AlbumType == "album" {
+			releases = repository.GetByAlbumType(AlbumType)
+		} else {
+			fmt.Println("unknown album type")
+			return
+		}
+
 		table := simpletable.New()
 		table.Header = &simpletable.Header{
 			Cells: []*simpletable.Cell{
@@ -52,7 +66,7 @@ var listReleaseCommand = &cobra.Command{
 				{Align: simpletable.AlignCenter, Text: "Genres"},
 			}}
 
-		for _, release := range repository.Fetch() {
+		for _, release := range releases {
 			r := []*simpletable.Cell{
 				{Text: fmt.Sprintf("%d", release.Id)},
 				{Text: release.ArtistName},
@@ -70,4 +84,5 @@ var listReleaseCommand = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(releaseCmd)
 	releaseCmd.AddCommand(listReleaseCommand)
+	listReleaseCommand.Flags().StringVarP(&AlbumType, "type", "t", "", "Release type (album)")
 }
