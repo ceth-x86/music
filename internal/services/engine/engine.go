@@ -8,10 +8,6 @@ type Engine struct {
 	DataRepository *repository.Repository
 }
 
-func NewEngine(dataRepository *repository.Repository) *Engine {
-	return &Engine{DataRepository: dataRepository}
-}
-
 type DownloadError struct {
 	Cause error
 }

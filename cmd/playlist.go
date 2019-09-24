@@ -144,7 +144,7 @@ var syncPlaylistCommand = &cobra.Command{
 		}
 
 		repository := repository2.NewRepository(db)
-		engine := engine2.NewEngine(repository)
+		engine := engine2.Engine{DataRepository: repository}
 
 		if Id != "" {
 
