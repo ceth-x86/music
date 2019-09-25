@@ -38,7 +38,7 @@ func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicser
 		}
 
 		// album
-		album, newAlbum, err := e.returnOrCreateAlbum(musicService, track.ServiceAlbumId)
+		album, newAlbum, err := e.returnOrCreateAlbum(musicService, track.ServiceAlbumId, artist.Id)
 		if err != nil {
 			switch e := err.(type) {
 			case *DownloadError:
