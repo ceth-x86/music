@@ -9,12 +9,18 @@ import (
 	"go.uber.org/zap"
 )
 
-func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicservices.IMusicService) (wasSaved bool) {
+func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicservices.IMusicService) (result *DownloadResult) {
 
 	logger := zap.NewExample().Sugar()
 	defer func() {
 		_ = logger.Sync()
 	}()
+
+	result = &DownloadResult{
+		Downloaded: true,
+		Album:      0,
+		Single:     0,
+	}
 
 	_, err := e.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
 	if err != nil {
@@ -34,7 +40,7 @@ func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicser
 					"Track.PlaylistId", track.PlaylistId,
 					"Track.ArtistId", track.ServiceArtistId)
 			}
-			return false
+			return DownloadTrackError()
 		}
 
 		// album
@@ -52,7 +58,7 @@ func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicser
 					"Track.PlaylistId", track.PlaylistId,
 					"Track.AlbumId", track.ServiceAlbumId)
 			}
-			return false
+			return DownloadTrackError()
 		}
 		album.ArtistId = artist.Id
 
@@ -67,7 +73,13 @@ func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicser
 					"Track.ServiceId", track.TrackId,
 					"Track.PlaylistId", track.PlaylistId,
 					"Track.AlbumId", track.ServiceAlbumId)
-				return
+				return DownloadTrackError()
+			}
+
+			if album.AlbumType == "album" {
+				result.Album += 1
+			} else if album.AlbumType == "single" {
+				result.Single += 1
 			}
 		}
 
@@ -78,23 +90,28 @@ func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicser
 		if err != nil {
 			logger.With(zap.Error(err)).Errorw("не удалось сохранить трек")
 		}
-		return true
+
+		return result
 	}
-	return false
+
+	return DownloadTrackError()
 }
 
-func (e *Engine) DownloadPlaylist(playlistId uint) {
+func (e *Engine) DownloadPlaylist(playlistId uint) *DownloadResult {
 
 	logger := zap.NewExample().Sugar()
 	defer func() {
 		_ = logger.Sync()
 	}()
 
+	var totalSingles uint = 0
+	var totalAlbums uint = 0
+
 	playlist, err := e.DataRepository.PlaylistRepository.GetById(playlistId)
 	if err != nil {
 		logger.Errorw("Cannot find playlist",
 			"PlaylistId", playlistId)
-		return
+		return DownloadTrackError()
 	}
 
 	musicService := musicservices.NewMusicService(playlist.Service)
@@ -106,7 +123,13 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 	var playlistWasUpdated = false
 	for _, track := range tracks {
 		track.PlaylistId = playlistId
-		playlistWasUpdated = e.processDownloadedTrack(track, musicService)
+
+		trackResult := e.processDownloadedTrack(track, musicService)
+		totalAlbums += trackResult.Album
+		totalSingles += trackResult.Single
+		if trackResult.Downloaded {
+			playlistWasUpdated = true
+		}
 	}
 
 	playlist.Name = servicePlaylist.Name
@@ -120,4 +143,6 @@ func (e *Engine) DownloadPlaylist(playlistId uint) {
 	if err != nil {
 		logger.With(zap.Error(err)).Error("не удалось обновить плейлист")
 	}
+
+	return &DownloadResult{Downloaded: true, Album: totalAlbums, Single: totalSingles}
 }

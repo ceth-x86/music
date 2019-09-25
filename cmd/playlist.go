@@ -145,6 +145,8 @@ var syncPlaylistCommand = &cobra.Command{
 
 		repository := repository2.NewRepository(db)
 		engine := engine2.Engine{DataRepository: repository}
+		var albums uint = 0
+		var singles uint = 0
 
 		if Id != "" {
 
@@ -155,14 +157,20 @@ var syncPlaylistCommand = &cobra.Command{
 					"Id", Id)
 			}
 
-			engine.DownloadPlaylist(uint(idUint))
+			result := engine.DownloadPlaylist(uint(idUint))
+			albums = result.Album
+			singles = result.Single
+
 		} else {
 
 			logger.Info("  all playlists")
 			for _, playlist := range repository.PlaylistRepository.Fetch() {
-				engine.DownloadPlaylist(playlist.Id)
+				result := engine.DownloadPlaylist(playlist.Id)
+				albums += result.Album
+				singles += result.Single
 			}
 		}
+		fmt.Printf("Загружено %d альбомов и %d синглов", albums, singles)
 	},
 }
 
