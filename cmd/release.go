@@ -72,7 +72,7 @@ var listReleaseCommand = &cobra.Command{
 				{Text: fmt.Sprintf("%d", release.Id)},
 				{Text: release.ArtistName},
 				{Text: release.AlbumName},
-				{Text: release.ReleaseDate},
+				{Text: release.ReleaseDate[:10]},
 				{Text: release.AlbumType},
 				{Text: release.Genres},
 			}
