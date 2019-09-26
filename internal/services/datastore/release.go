@@ -33,7 +33,7 @@ func (r *ReleaseRepository) Fetch() []*core.Release {
 	var result []*core.Release
 
 	r.db.Select("releases.*, " +
-		"albums.name as album_name, albums.album_type as album_type, " +
+		"albums.name as album_name, albums.album_type as album_type, albums.release_date, " +
 		"artists.name as artist_name, artists.genres").
 		Table("releases").
 		Joins("JOIN albums ON releases.album_id = albums.id").
@@ -50,7 +50,7 @@ func (r *ReleaseRepository) GetByAlbumType(albumType string) []*core.Release {
 	var result []*core.Release
 
 	r.db.Select("releases.*, "+
-		"albums.name as album_name, albums.album_type as album_type, "+
+		"albums.name as album_name, albums.album_type as album_type, albums.release_date, "+
 		"artists.name as artist_name, artists.genres").
 		Table("releases").
 		Joins("JOIN albums ON releases.album_id = albums.id").

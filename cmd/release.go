@@ -62,6 +62,7 @@ var listReleaseCommand = &cobra.Command{
 				{Align: simpletable.AlignCenter, Text: "Id"},
 				{Align: simpletable.AlignCenter, Text: "Artist"},
 				{Align: simpletable.AlignCenter, Text: "Album"},
+				{Align: simpletable.AlignCenter, Text: "Date"},
 				{Align: simpletable.AlignCenter, Text: "Type"},
 				{Align: simpletable.AlignCenter, Text: "Genres"},
 			}}
@@ -71,6 +72,7 @@ var listReleaseCommand = &cobra.Command{
 				{Text: fmt.Sprintf("%d", release.Id)},
 				{Text: release.ArtistName},
 				{Text: release.AlbumName},
+				{Text: release.ReleaseDate},
 				{Text: release.AlbumType},
 				{Text: release.Genres},
 			}

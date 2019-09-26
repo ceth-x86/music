@@ -20,7 +20,7 @@ func InitSettings() *Settings {
 	once.Do(func() {
 		settings = new(Settings)
 		flag.StringVar(&settings.DbConnectionString, "dbConnectionString", "none", "Connection string to PostgreSQL")
-		flag.BoolVar(&settings.TraceSqlCommand, "traceSqlCommands", false, "Trace sql commands")
+		flag.BoolVar(&settings.TraceSqlCommand, "traceSqlCommands", true, "Trace sql commands")
 		flag.StringVar(&settings.SpotifyClientId, "spotifyClientId", "", "Spotify ClientID")
 		flag.StringVar(&settings.SpotifyClientSecret, "spotifyClientSecret", "", "Spotify Client Secret")
 		flag.Parse()

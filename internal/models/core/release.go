@@ -7,8 +7,9 @@ type Release struct {
 	AlbumId  uint
 	SyncDate time.Time
 
-	AlbumName  string
-	ArtistName string
-	Genres     string
-	AlbumType  string
+	AlbumName   string
+	ArtistName  string
+	Genres      string
+	AlbumType   string
+	ReleaseDate string
 }
