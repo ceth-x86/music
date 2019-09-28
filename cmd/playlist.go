@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/demas/music/internal/models/enums"
 
@@ -164,11 +165,32 @@ var syncPlaylistCommand = &cobra.Command{
 		} else {
 
 			logger.Info("  all playlists")
-			for _, playlist := range repository.PlaylistRepository.Fetch() {
-				result := engine.DownloadPlaylist(playlist.Id)
-				albums += result.Album
-				singles += result.Single
+
+			ch := make(chan *engine2.DownloadResult)
+			var wg sync.WaitGroup
+
+			increment := func(data *engine2.DownloadResult) {
+				albums += data.Album
+				singles += data.Single
 			}
+
+			go func() {
+				for result := range ch {
+					increment(result)
+				}
+			}()
+
+			for _, playlist := range repository.PlaylistRepository.Fetch() {
+				id := playlist.Id
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					ch <- engine.DownloadPlaylist(id)
+				}()
+			}
+
+			wg.Wait()
+			close(ch)
 		}
 		fmt.Printf("Загружено %d альбомов и %d синглов", albums, singles)
 	},
