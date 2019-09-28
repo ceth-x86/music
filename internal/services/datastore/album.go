@@ -11,6 +11,7 @@ import (
 type IAlbumRepository interface {
 	GetById(id uint) (*core.Album, error)
 	GetByAlbumId(albumId string) (*core.Album, error)
+	GetByArtistIdAndName(atristId uint, name string) (*core.Album, error)
 	Store(p *core.Album) (*core.Album, error)
 }
 
@@ -46,6 +47,15 @@ func (r *AlbumRepository) GetById(id uint) (*core.Album, error) {
 func (r *AlbumRepository) GetByAlbumId(albumId string) (*core.Album, error) {
 	result := &core.Album{}
 	r.db.Where("album_id = ?", albumId).First(&result)
+	if result.Id == 0 {
+		return nil, errors.New("record not found")
+	}
+	return result, nil
+}
+
+func (r *AlbumRepository) GetByArtistIdAndName(artistId uint, name string) (*core.Album, error) {
+	result := &core.Album{}
+	r.db.Where("artist_id = ? and name = ?", artistId, name).First(&result)
 	if result.Id == 0 {
 		return nil, errors.New("record not found")
 	}

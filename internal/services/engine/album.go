@@ -11,19 +11,22 @@ func (e *Engine) returnOrCreateAlbum(musicService musicservices.IMusicService, s
 	album, err := e.DataRepository.AlbumRepository.GetByAlbumId(serviceAlbumId)
 	if err != nil {
 
-		album, err = musicService.DownloadAlbum(serviceAlbumId)
+		serviceAlbum, err := musicService.DownloadAlbum(serviceAlbumId)
 		if err != nil {
 			return nil, false, &DownloadError{Cause: err}
 		}
 
-		album.ArtistId = artistId
-		album, err = e.DataRepository.AlbumRepository.Store(album)
+		// check album existence with different musicServiceId
+		album, err = e.DataRepository.AlbumRepository.GetByArtistIdAndName(artistId, serviceAlbum.Name)
 		if err != nil {
-			return nil, false, &StoreError{Cause: err}
+			serviceAlbum.ArtistId = artistId
+			album, err = e.DataRepository.AlbumRepository.Store(serviceAlbum)
+			if err != nil {
+				return nil, false, &StoreError{Cause: err}
+			}
+
+			return album, true, nil
 		}
-
-		return album, true, nil
 	}
-
 	return album, false, nil
 }
