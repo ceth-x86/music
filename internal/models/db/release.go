@@ -8,6 +8,7 @@ import (
 
 type Release struct {
 	gorm.Model
-	AlbumId  uint      `gorm:"TYPE:integer REFERENCES albums"`
-	SyncDate time.Time `gorm:"index"`
+	AlbumId    uint      `gorm:"TYPE:integer REFERENCES albums"`
+	PlaylistId uint      `gorm:"TYPE:integer REFERENCES playlists"`
+	SyncDate   time.Time `gorm:"index"`
 }

@@ -25,6 +25,7 @@ func NewReleaseRepository(dbHandler *gorm.DB) *ReleaseRepository {
 func setReleaseFields(r db.Release, release *core.Release) db.Release {
 	r.AlbumId = release.AlbumId
 	r.SyncDate = release.SyncDate
+	r.PlaylistId = release.PlaylistId
 	return r
 }
 

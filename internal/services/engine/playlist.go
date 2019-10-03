@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicservices.IMusicService) (result *DownloadResult) {
+func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicservices.IMusicService, playlistId uint) (result *DownloadResult) {
 
 	logger := zap.NewExample().Sugar()
 	defer func() {
@@ -64,8 +64,9 @@ func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicser
 
 		if newAlbum && isItNewRelease(album.ReleaseDate) {
 			_, err := e.DataRepository.ReleaseRepository.Store(&core.Release{
-				AlbumId:  album.Id,
-				SyncDate: time.Now(),
+				AlbumId:    album.Id,
+				PlaylistId: playlistId,
+				SyncDate:   time.Now(),
 			})
 
 			if err != nil {
@@ -124,7 +125,7 @@ func (e *Engine) DownloadPlaylist(playlistId uint) *DownloadResult {
 	for _, track := range tracks {
 		track.PlaylistId = playlistId
 
-		trackResult := e.processDownloadedTrack(track, musicService)
+		trackResult := e.processDownloadedTrack(track, musicService, playlistId)
 		totalAlbums += trackResult.Album
 		totalSingles += trackResult.Single
 		if trackResult.Downloaded {
