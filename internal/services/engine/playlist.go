@@ -3,147 +3,156 @@ package engine
 import (
 	"time"
 
+	"github.com/demas/music/internal/services/datastore/repository"
+
 	"github.com/demas/music/internal/services/musicservices"
 
 	"github.com/demas/music/internal/models/core"
 	"go.uber.org/zap"
 )
 
-func (e *Engine) processDownloadedTrack(track *core.Track, musicService musicservices.IMusicService, playlistId uint) (result *DownloadResult) {
+type PlaylistDownloader struct {
+	Engine         *Engine
+	DataRepository *repository.Repository
+	Logger         *zap.SugaredLogger
 
-	logger := zap.NewExample().Sugar()
-	defer func() {
-		_ = logger.Sync()
-	}()
+	CurrentPlaylist    *core.Playlist
+	MusicService       musicservices.IMusicService
+	TotalSingles       uint
+	TotalAlbums        uint
+	PlaylistWasUpdated bool
+}
 
-	result = &DownloadResult{
-		Downloaded: true,
-		Album:      0,
-		Single:     0,
+func (e *Engine) PlaylistDownloader() *PlaylistDownloader {
+	return &PlaylistDownloader{
+		Engine:         e,
+		DataRepository: e.DataRepository,
+		TotalSingles:   0,
+		TotalAlbums:    0}
+}
+
+func (d *PlaylistDownloader) createRelease(album *core.Album, track *core.Track) {
+	_, err := d.DataRepository.ReleaseRepository.Store(&core.Release{
+		AlbumId:    album.Id,
+		PlaylistId: d.CurrentPlaylist.Id,
+		SyncDate:   time.Now(),
+	})
+
+	if err != nil {
+		d.Logger.With(zap.Error(err)).Errorw("не удалось сохранить релиз",
+			"Track.ServiceId", track.TrackId,
+			"Track.PlaylistId", track.PlaylistId,
+			"Track.AlbumId", track.ServiceAlbumId)
+		return
 	}
 
-	_, err := e.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
+	if album.AlbumType == "album" {
+		d.TotalAlbums += 1
+	} else if album.AlbumType == "single" {
+		d.TotalSingles += 1
+	}
+}
+
+func (d *PlaylistDownloader) processTrack(track *core.Track) {
+
+	_, err := d.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
 	if err != nil {
 
 		// artist
-		artist, err := e.returnOrCreateArtist(musicService, track.ServiceArtistId)
+		artist, err := d.Engine.returnOrCreateArtist(d.MusicService, track.ServiceArtistId)
 		if err != nil {
 			switch e := err.(type) {
 			case *DownloadError:
-				logger.With(zap.Error(e)).Errorw("не удалось получить исполнителя на музыкальном сервисе",
+				d.Logger.With(zap.Error(e)).Errorw("не удалось получить исполнителя на музыкальном сервисе",
 					"Track.ServiceId", track.TrackId,
 					"Track.PlaylistId", track.PlaylistId,
 					"Track.ArtistId", track.ServiceArtistId)
 			case *StoreError:
-				logger.With(zap.Error(err)).Errorw("не удалось сохранить исполнителя",
+				d.Logger.With(zap.Error(err)).Errorw("не удалось сохранить исполнителя",
 					"Track.ServiceId", track.TrackId,
 					"Track.PlaylistId", track.PlaylistId,
 					"Track.ArtistId", track.ServiceArtistId)
 			}
-			return DownloadTrackError()
+			return
 		}
 
 		// album
-		album, newAlbum, err := e.returnOrCreateAlbum(musicService, track.ServiceAlbumId, artist.Id)
+		album, newAlbum, err := d.Engine.returnOrCreateAlbum(d.MusicService, track.ServiceAlbumId, artist.Id)
 		if err != nil {
 			switch e := err.(type) {
 			case *DownloadError:
-				logger.With(zap.Error(e)).Errorw("не удалось получить альбом на музыкальном сервисе",
+				d.Logger.With(zap.Error(e)).Errorw("не удалось получить альбом на музыкальном сервисе",
 					"Track.ServiceId", track.TrackId,
 					"Track.PlaylistId", track.PlaylistId,
 					"Track.AlbumId", track.ServiceAlbumId)
 			case *StoreError:
-				logger.With(zap.Error(err)).Errorw("не удалось сохранить альбом",
+				d.Logger.With(zap.Error(err)).Errorw("не удалось сохранить альбом",
 					"Track.ServiceId", track.TrackId,
 					"Track.PlaylistId", track.PlaylistId,
 					"Track.AlbumId", track.ServiceAlbumId)
 			}
-			return DownloadTrackError()
+			return
 		}
 		album.ArtistId = artist.Id
 
 		if newAlbum && isItNewRelease(album.ReleaseDate) {
-			_, err := e.DataRepository.ReleaseRepository.Store(&core.Release{
-				AlbumId:    album.Id,
-				PlaylistId: playlistId,
-				SyncDate:   time.Now(),
-			})
-
-			if err != nil {
-				logger.With(zap.Error(err)).Errorw("не удалось сохранить релиз",
-					"Track.ServiceId", track.TrackId,
-					"Track.PlaylistId", track.PlaylistId,
-					"Track.AlbumId", track.ServiceAlbumId)
-				return DownloadTrackError()
-			}
-
-			if album.AlbumType == "album" {
-				result.Album += 1
-			} else if album.AlbumType == "single" {
-				result.Single += 1
-			}
+			d.createRelease(album, track)
 		}
 
 		track.ArtistId = artist.Id
 		track.AlbumId = album.Id
 
-		_, err = e.DataRepository.TrackRepository.Store(track)
+		_, err = d.DataRepository.TrackRepository.Store(track)
 		if err != nil {
-			logger.With(zap.Error(err)).Errorw("не удалось сохранить трек")
+			d.Logger.With(zap.Error(err)).Errorw("не удалось сохранить трек")
 		}
 
-		return result
+		d.PlaylistWasUpdated = true
+
+		return
 	}
 
-	return DownloadTrackError()
+	return
 }
 
-func (e *Engine) DownloadPlaylist(playlistId uint) *DownloadResult {
+func (d *PlaylistDownloader) Download(playlistId uint) *DownloadResult {
 
-	logger := zap.NewExample().Sugar()
+	var err error
+	d.Logger = zap.NewExample().Sugar()
 	defer func() {
-		_ = logger.Sync()
+		_ = d.Logger.Sync()
 	}()
 
-	var totalSingles uint = 0
-	var totalAlbums uint = 0
-
-	playlist, err := e.DataRepository.PlaylistRepository.GetById(playlistId)
+	d.CurrentPlaylist, err = d.DataRepository.PlaylistRepository.GetById(playlistId)
 	if err != nil {
-		logger.Errorw("Cannot find playlist",
+		d.Logger.Errorw("Cannot find playlist",
 			"PlaylistId", playlistId)
 		return DownloadTrackError()
 	}
 
-	musicService := musicservices.NewMusicService(playlist.Service)
-	servicePlaylist, tracks, err := musicService.DownloadPlaylist(playlist.PlaylistId)
+	d.MusicService = musicservices.NewMusicService(d.CurrentPlaylist.Service)
+	servicePlaylist, tracks, err := d.MusicService.DownloadPlaylist(d.CurrentPlaylist.PlaylistId)
 	if err != nil {
-		logger.With(zap.Error(err)).Error(err)
+		d.Logger.With(zap.Error(err)).Error(err)
 	}
 
-	var playlistWasUpdated = false
+	d.PlaylistWasUpdated = false
 	for _, track := range tracks {
 		track.PlaylistId = playlistId
-
-		trackResult := e.processDownloadedTrack(track, musicService, playlistId)
-		totalAlbums += trackResult.Album
-		totalSingles += trackResult.Single
-		if trackResult.Downloaded {
-			playlistWasUpdated = true
-		}
+		d.processTrack(track)
 	}
 
-	playlist.Name = servicePlaylist.Name
-	playlist.Description = servicePlaylist.Description
-	if playlistWasUpdated {
+	d.CurrentPlaylist.Name = servicePlaylist.Name
+	d.CurrentPlaylist.Description = servicePlaylist.Description
+	if d.PlaylistWasUpdated {
 		t := time.Now()
-		playlist.LastChanged = &t
+		d.CurrentPlaylist.LastChanged = &t
 	}
 
-	_, err = e.DataRepository.PlaylistRepository.Update(playlistId, playlist)
+	_, err = d.DataRepository.PlaylistRepository.Update(playlistId, d.CurrentPlaylist)
 	if err != nil {
-		logger.With(zap.Error(err)).Error("не удалось обновить плейлист")
+		d.Logger.With(zap.Error(err)).Error("не удалось обновить плейлист")
 	}
 
-	return &DownloadResult{Downloaded: true, Album: totalAlbums, Single: totalSingles}
+	return &DownloadResult{Downloaded: true, Album: d.TotalAlbums, Single: d.TotalSingles}
 }

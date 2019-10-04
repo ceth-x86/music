@@ -65,6 +65,7 @@ var listReleaseCommand = &cobra.Command{
 				{Align: simpletable.AlignCenter, Text: "Date"},
 				{Align: simpletable.AlignCenter, Text: "Type"},
 				{Align: simpletable.AlignCenter, Text: "Genres"},
+				{Align: simpletable.AlignCenter, Text: "Playlist"},
 			}}
 
 		for _, release := range releases {
@@ -75,6 +76,7 @@ var listReleaseCommand = &cobra.Command{
 				{Text: release.ReleaseDate[:10]},
 				{Text: release.AlbumType},
 				{Text: release.Genres},
+				{Text: release.PlaylistName},
 			}
 			table.Body.Cells = append(table.Body.Cells, r)
 		}

@@ -158,7 +158,7 @@ var syncPlaylistCommand = &cobra.Command{
 					"Id", Id)
 			}
 
-			result := engine.DownloadPlaylist(uint(idUint))
+			result := engine.PlaylistDownloader().Download(uint(idUint))
 			albums = result.Album
 			singles = result.Single
 
@@ -185,7 +185,7 @@ var syncPlaylistCommand = &cobra.Command{
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ch <- engine.DownloadPlaylist(id)
+					ch <- engine.PlaylistDownloader().Download(id)
 				}()
 			}
 

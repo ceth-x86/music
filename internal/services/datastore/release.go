@@ -35,10 +35,12 @@ func (r *ReleaseRepository) Fetch() []*core.Release {
 
 	r.db.Select("releases.*, " +
 		"albums.name as album_name, albums.album_type as album_type, albums.release_date, " +
-		"artists.name as artist_name, artists.genres").
+		"artists.name as artist_name, artists.genres, " +
+		"playlists.name as playlist_name").
 		Table("releases").
 		Joins("JOIN albums ON releases.album_id = albums.id").
 		Joins("JOIN artists ON albums.artist_id = artists.id").
+		Joins("JOIN playlists ON releases.playlist_id = playlists.id").
 		Where("releases.deleted_at is null").
 		Order("albums.release_date").
 		Find(&result)
@@ -52,10 +54,12 @@ func (r *ReleaseRepository) GetByAlbumType(albumType string) []*core.Release {
 
 	r.db.Select("releases.*, "+
 		"albums.name as album_name, albums.album_type as album_type, albums.release_date, "+
-		"artists.name as artist_name, artists.genres").
+		"artists.name as artist_name, artists.genres, "+
+		"playlists.name as playlist_name").
 		Table("releases").
 		Joins("JOIN albums ON releases.album_id = albums.id").
 		Joins("JOIN artists ON albums.artist_id = artists.id").
+		Joins("JOIN playlists ON releases.playlist_id = playlists.id").
 		Where("albums.album_type = ?", albumType).
 		Where("releases.deleted_at is null").
 		Order("albums.release_date").
