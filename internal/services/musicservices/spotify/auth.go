@@ -73,7 +73,9 @@ func createClient() spotify.Client {
 		}
 	}
 
-	return auth.NewClient(token)
+	client := auth.NewClient(token)
+	client.AutoRetry = true
+	return client
 }
 
 func tokenPath() string {
