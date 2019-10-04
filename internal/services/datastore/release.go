@@ -40,7 +40,7 @@ func (r *ReleaseRepository) Fetch() []*core.Release {
 		Joins("JOIN albums ON releases.album_id = albums.id").
 		Joins("JOIN artists ON albums.artist_id = artists.id").
 		Where("releases.deleted_at is null").
-		Order("releases.sync_date").
+		Order("albums.release_date").
 		Find(&result)
 
 	return result
@@ -58,7 +58,7 @@ func (r *ReleaseRepository) GetByAlbumType(albumType string) []*core.Release {
 		Joins("JOIN artists ON albums.artist_id = artists.id").
 		Where("albums.album_type = ?", albumType).
 		Where("releases.deleted_at is null").
-		Order("releases.sync_date").
+		Order("albums.release_date").
 		Find(&result)
 
 	return result
