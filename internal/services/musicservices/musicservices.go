@@ -4,13 +4,23 @@ import (
 	"github.com/demas/music/internal/models/core"
 	"github.com/demas/music/internal/models/enums"
 	spotify2 "github.com/demas/music/internal/services/musicservices/spotify"
+	yandex2 "github.com/demas/music/internal/services/musicservices/yandex"
 	"go.uber.org/zap"
 )
 
 type IMusicService interface {
+	DownloadPlaylist(playlistId string) (*core.Playlist, []*core.Track, error)
+}
+
+type IMusicRepository interface {
 	DownloadAlbum(albumId string) (*core.Album, error)
 	DownloadArtist(artistId string) (*core.Artist, error)
-	DownloadPlaylist(playlistId string) (*core.Playlist, []*core.Track, error)
+	SearchAlbum(artist string, album string) []*core.Album
+}
+
+// TODO: singleton
+func NewMusicRepository() IMusicRepository {
+	return spotify2.NewSpotify()
 }
 
 func NewMusicService(service uint) IMusicService {
@@ -22,8 +32,9 @@ func NewMusicService(service uint) IMusicService {
 
 	switch service {
 	case uint(enums.MusicServiceSpotify):
-		spotify := spotify2.NewSpotify()
-		return spotify
+		return spotify2.NewSpotify()
+	case uint(enums.MusicServiceYandex):
+		return yandex2.NewYandex()
 	default:
 		logger.Errorw("not implemented music service",
 			"Service", service)

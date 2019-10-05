@@ -8,6 +8,9 @@ type Track struct {
 	ArtistId   uint
 	AlbumId    uint
 
-	ServiceArtistId string
-	ServiceAlbumId  string
+	MasterData        bool
+	ServiceArtistId   string
+	ServiceAlbumId    string
+	ServiceArtistName string
+	ServiceAlbumName  string
 }

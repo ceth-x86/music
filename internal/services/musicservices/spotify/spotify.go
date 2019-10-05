@@ -36,5 +36,17 @@ func convertTrack(spotifyTrack *spotify.PlaylistTrack) *core.Track {
 		TrackId:         string(spotifyTrack.Track.ID),
 		ServiceAlbumId:  string(spotifyTrack.Track.Album.ID),
 		ServiceArtistId: string(spotifyTrack.Track.Artists[0].ID),
+		MasterData:      true,
+	}
+}
+
+func convertAlbum(spotifyAlbum *spotify.SimpleAlbum) *core.Album {
+	return &core.Album{
+		Name:              spotifyAlbum.Name,
+		AlbumId:           string(spotifyAlbum.ID),
+		AlbumType:         spotifyAlbum.AlbumType,
+		ArtistMasterId:    string(spotifyAlbum.Artists[0].ID),
+		ArtistName:        spotifyAlbum.Artists[0].Name,
+		ReleaseDateString: spotifyAlbum.ReleaseDate,
 	}
 }

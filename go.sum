@@ -39,6 +39,10 @@ github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwc
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/demas/yandexmusic v0.0.0-20190423135536-8b4a6261706a h1:Gql5aEk09e7id5F8te39nkKL11BrdZ1r3qrN4EDlxus=
+github.com/demas/yandexmusic v0.0.0-20190423135536-8b4a6261706a/go.mod h1:xpQ1/dDiBUy4VvVfgqAdEh8lWWidhumhJmuuqjlxslU=
+github.com/demas/yandexmusic v0.0.0-20191005082452-0a96b1d974ee h1:HqFeOaYYSjZ0LG8J45PjbNCdxyoCxoMYBzVbT8K7bF8=
+github.com/demas/yandexmusic v0.0.0-20191005082452-0a96b1d974ee/go.mod h1:xpQ1/dDiBUy4VvVfgqAdEh8lWWidhumhJmuuqjlxslU=
 github.com/denisenkom/go-mssqldb v0.0.0-20190515213511-eb9f6a1743f3 h1:tkum0XDgfR0jcVVXuTsYv/erY2NnEDqwRojbxR1rBYA=
 github.com/denisenkom/go-mssqldb v0.0.0-20190515213511-eb9f6a1743f3/go.mod h1:zAg7JM8CkOJ43xKXIj7eRO9kmWm/TW578qo+oDO6tuM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=

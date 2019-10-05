@@ -11,4 +11,8 @@ type Album struct {
 	Popularity  int
 	// TODO: may be enum
 	AlbumType string
+
+	ArtistMasterId    string
+	ArtistName        string
+	ReleaseDateString string
 }

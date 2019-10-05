@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/demas/music/internal/services/datastore/repository"
@@ -18,6 +19,7 @@ type PlaylistDownloader struct {
 
 	CurrentPlaylist    *core.Playlist
 	MusicService       musicservices.IMusicService
+	MusicRepository    musicservices.IMusicRepository
 	TotalSingles       uint
 	TotalAlbums        uint
 	PlaylistWasUpdated bool
@@ -53,13 +55,37 @@ func (d *PlaylistDownloader) createRelease(album *core.Album, track *core.Track)
 	}
 }
 
+func (d *PlaylistDownloader) chooseAlbumFromSearchResults(albums []*core.Album, artistName string, albumName string) *core.Album {
+
+	for _, candidate := range albums {
+		if candidate.ReleaseDateString[0:4] == fmt.Sprintf("%v", time.Now().Year()) {
+			return candidate
+		}
+	}
+	return nil
+}
+
 func (d *PlaylistDownloader) processTrack(track *core.Track) {
+
+	if !track.MasterData {
+
+		albums := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
+		masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
+
+		// TODO: logging
+		if masterAlbum == nil {
+			return
+		}
+
+		track.ServiceArtistId = masterAlbum.ArtistMasterId
+		track.ServiceAlbumId = masterAlbum.AlbumId
+	}
 
 	_, err := d.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
 	if err != nil {
 
 		// artist
-		artist, err := d.Engine.returnOrCreateArtist(d.MusicService, track.ServiceArtistId)
+		artist, err := d.Engine.returnOrCreateArtist(d.MusicRepository, track.ServiceArtistId)
 		if err != nil {
 			switch e := err.(type) {
 			case *DownloadError:
@@ -77,7 +103,7 @@ func (d *PlaylistDownloader) processTrack(track *core.Track) {
 		}
 
 		// album
-		album, newAlbum, err := d.Engine.returnOrCreateAlbum(d.MusicService, track.ServiceAlbumId, artist.Id)
+		album, newAlbum, err := d.Engine.returnOrCreateAlbum(d.MusicRepository, track.ServiceAlbumId, artist.Id)
 		if err != nil {
 			switch e := err.(type) {
 			case *DownloadError:
@@ -130,6 +156,7 @@ func (d *PlaylistDownloader) Download(playlistId uint) *DownloadResult {
 		return DownloadTrackError()
 	}
 
+	d.MusicRepository = musicservices.NewMusicRepository()
 	d.MusicService = musicservices.NewMusicService(d.CurrentPlaylist.Service)
 	servicePlaylist, tracks, err := d.MusicService.DownloadPlaylist(d.CurrentPlaylist.PlaylistId)
 	if err != nil {

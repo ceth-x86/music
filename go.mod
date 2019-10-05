@@ -6,6 +6,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.3.3
 	github.com/abice/go-enum v0.2.1 // indirect
 	github.com/alexeyco/simpletable v0.0.0-20190222165044-2eb48bcee7cf
+	github.com/demas/yandexmusic v0.0.0-20191005082452-0a96b1d974ee
 	github.com/go-test/deep v1.0.3
 	github.com/jinzhu/gorm v1.9.10
 	github.com/mitchellh/go-homedir v1.1.0
