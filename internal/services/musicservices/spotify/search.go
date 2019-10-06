@@ -17,8 +17,10 @@ func (s *Spotify) SearchAlbum(artist string, album string) []*core.Album {
 	}
 
 	var result []*core.Album
-	for _, spotifyAlbum := range searchResult.Albums.Albums {
-		result = append(result, convertAlbum(&spotifyAlbum))
+	if searchResult != nil && searchResult.Albums != nil {
+		for _, spotifyAlbum := range searchResult.Albums.Albums {
+			result = append(result, convertAlbum(&spotifyAlbum))
+		}
 	}
 
 	return result
