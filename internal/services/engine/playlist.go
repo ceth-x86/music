@@ -19,7 +19,7 @@ type PlaylistDownloader struct {
 
 	CurrentPlaylist    *core.Playlist
 	MusicService       musicservices.IMusicService
-	MusicRepository    musicservices.IMusicRepository
+	MusicRepository    musicservices.IMasterDataRepository
 	TotalSingles       uint
 	TotalAlbums        uint
 	PlaylistWasUpdated bool

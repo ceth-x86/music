@@ -12,14 +12,14 @@ type IMusicService interface {
 	DownloadPlaylist(playlistId string) (*core.Playlist, []*core.Track, error)
 }
 
-type IMusicRepository interface {
+type IMasterDataRepository interface {
 	DownloadAlbum(albumId string) (*core.Album, error)
 	DownloadArtist(artistId string) (*core.Artist, error)
 	SearchAlbum(artist string, album string) []*core.Album
 }
 
 // TODO: singleton
-func NewMusicRepository() IMusicRepository {
+func NewMusicRepository() IMasterDataRepository {
 	return spotify2.NewSpotify()
 }
 

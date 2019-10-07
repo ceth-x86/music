@@ -6,7 +6,7 @@ import (
 )
 
 // bool: is it new album, or existing one
-func (e *Engine) returnOrCreateAlbum(musicService musicservices.IMusicRepository, serviceAlbumId string, artistId uint) (*core.Album, bool, error) {
+func (e *Engine) returnOrCreateAlbum(musicService musicservices.IMasterDataRepository, serviceAlbumId string, artistId uint) (*core.Album, bool, error) {
 
 	album, err := e.DataRepository.AlbumRepository.GetByAlbumId(serviceAlbumId)
 	if err != nil {

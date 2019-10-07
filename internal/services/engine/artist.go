@@ -5,7 +5,7 @@ import (
 	"github.com/demas/music/internal/services/musicservices"
 )
 
-func (e *Engine) returnOrCreateArtist(musicService musicservices.IMusicRepository, serviceArtistId string) (*core.Artist, error) {
+func (e *Engine) returnOrCreateArtist(musicService musicservices.IMasterDataRepository, serviceArtistId string) (*core.Artist, error) {
 
 	artist, err := e.DataRepository.ArtistRepository.GetByArtistId(serviceArtistId)
 	if err != nil {
