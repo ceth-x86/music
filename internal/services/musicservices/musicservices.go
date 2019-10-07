@@ -15,7 +15,7 @@ type IMusicService interface {
 type IMasterDataRepository interface {
 	DownloadAlbum(albumId string) (*core.Album, error)
 	DownloadArtist(artistId string) (*core.Artist, error)
-	SearchAlbum(artist string, album string) []*core.Album
+	SearchAlbum(artist string, album string) ([]*core.Album, error)
 }
 
 func NewMusicRepository() IMasterDataRepository {

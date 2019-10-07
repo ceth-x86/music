@@ -27,10 +27,12 @@ type PlaylistDownloader struct {
 
 func (e *Engine) PlaylistDownloader() *PlaylistDownloader {
 	return &PlaylistDownloader{
-		Engine:         e,
-		DataRepository: e.DataRepository,
-		TotalSingles:   0,
-		TotalAlbums:    0}
+		Engine:          e,
+		DataRepository:  e.DataRepository,
+		Logger:          zap.NewExample().Sugar(),
+		MusicRepository: musicservices.NewMusicRepository(),
+		TotalSingles:    0,
+		TotalAlbums:     0}
 }
 
 func (d *PlaylistDownloader) createRelease(album *core.Album, track *core.Track) {
@@ -69,11 +71,18 @@ func (d *PlaylistDownloader) processTrack(track *core.Track) {
 
 	if !track.MasterData {
 
-		albums := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
-		masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
+		albums, err := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
+		if err != nil {
+			d.Logger.With(zap.Error(err)).Errorw("при поиске альбома в Spotify произошла ошибка",
+				"Artist", track.ServiceArtistName,
+				"Album", track.ServiceAlbumName)
+		}
 
-		// TODO: logging
+		masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
 		if masterAlbum == nil {
+			d.Logger.With(zap.Error(err)).Errorw("не удалось найти альбом в Spotify",
+				"Artist", track.ServiceArtistName,
+				"Album", track.ServiceAlbumName)
 			return
 		}
 
@@ -144,7 +153,6 @@ func (d *PlaylistDownloader) processTrack(track *core.Track) {
 func (d *PlaylistDownloader) Download(playlistId uint) *DownloadResult {
 
 	var err error
-	d.Logger = zap.NewExample().Sugar()
 	defer func() {
 		_ = d.Logger.Sync()
 	}()
@@ -156,7 +164,6 @@ func (d *PlaylistDownloader) Download(playlistId uint) *DownloadResult {
 		return DownloadTrackError()
 	}
 
-	d.MusicRepository = musicservices.NewMusicRepository()
 	d.MusicService = musicservices.NewMusicService(d.CurrentPlaylist.Service)
 	servicePlaylist, tracks, err := d.MusicService.DownloadPlaylist(d.CurrentPlaylist.PlaylistId)
 	if err != nil {
