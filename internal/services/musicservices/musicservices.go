@@ -18,7 +18,6 @@ type IMasterDataRepository interface {
 	SearchAlbum(artist string, album string) []*core.Album
 }
 
-// TODO: singleton
 func NewMusicRepository() IMasterDataRepository {
 	return spotify2.NewSpotify()
 }

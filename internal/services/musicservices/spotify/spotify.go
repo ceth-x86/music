@@ -1,9 +1,16 @@
 package spotify
 
 import (
+	"sync"
+
 	"github.com/demas/music/internal/models/core"
 	"github.com/demas/music/internal/models/enums"
 	"github.com/zmb3/spotify"
+)
+
+var (
+	once     sync.Once
+	instance *Spotify
 )
 
 type Spotify struct {
@@ -11,7 +18,10 @@ type Spotify struct {
 }
 
 func NewSpotify() *Spotify {
-	return &Spotify{Client: createClient()}
+	once.Do(func() {
+		instance = &Spotify{Client: createClient()}
+	})
+	return instance
 }
 
 func (s *Spotify) options(offset int, limit int) *spotify.Options {
