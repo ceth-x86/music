@@ -12,3 +12,9 @@ type Release struct {
 	PlaylistId uint      `gorm:"TYPE:integer REFERENCES playlists"`
 	SyncDate   time.Time `gorm:"index"`
 }
+
+type MissingRelease struct {
+	gorm.Model
+	ArtistName string
+	AlbumName  string `gorm:"index"`
+}

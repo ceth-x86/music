@@ -71,6 +71,11 @@ func (d *PlaylistDownloader) processTrack(track *core.Track) {
 
 	if !track.MasterData {
 
+		missingReleases := d.Engine.DataRepository.MissingReleaseRepository.FindByAlbumAndArtist(track.ServiceAlbumName, track.ServiceArtistName)
+		if len(missingReleases) != 0 {
+			return
+		}
+
 		albums, err := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
 		if err != nil {
 			d.Logger.With(zap.Error(err)).Errorw("при поиске альбома в Spotify произошла ошибка",
@@ -80,9 +85,16 @@ func (d *PlaylistDownloader) processTrack(track *core.Track) {
 
 		masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
 		if masterAlbum == nil {
-			d.Logger.With(zap.Error(err)).Errorw("не удалось найти альбом в Spotify",
-				"Artist", track.ServiceArtistName,
-				"Album", track.ServiceAlbumName)
+
+			_, err = d.Engine.DataRepository.MissingReleaseRepository.Store(&core.MissingRelease{
+				ArtistName: track.ServiceArtistName,
+				AlbumName:  track.ServiceAlbumName,
+			})
+
+			if err != nil {
+				d.Logger.With(zap.Error(err)).Error("при сохранении MissingRelease произошла ошибка")
+			}
+
 			return
 		}
 

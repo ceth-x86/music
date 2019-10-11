@@ -15,3 +15,9 @@ type Release struct {
 	ReleaseDate  string
 	PlaylistName string
 }
+
+type MissingRelease struct {
+	Id         uint
+	ArtistName string
+	AlbumName  string
+}
