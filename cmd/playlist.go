@@ -148,6 +148,7 @@ var syncPlaylistCommand = &cobra.Command{
 		engine := engine2.Engine{DataRepository: repository}
 		var albums uint = 0
 		var singles uint = 0
+		var playlists uint = 0
 
 		if Id != "" {
 
@@ -172,6 +173,7 @@ var syncPlaylistCommand = &cobra.Command{
 			increment := func(data *engine2.DownloadResult) {
 				albums += data.Album
 				singles += data.Single
+				playlists += 1
 			}
 
 			go func() {
@@ -192,6 +194,7 @@ var syncPlaylistCommand = &cobra.Command{
 			wg.Wait()
 			close(ch)
 		}
+		fmt.Printf("Обработано %d плейлистов\n", playlists)
 		fmt.Printf("Загружено %d альбомов и %d синглов", albums, singles)
 	},
 }
