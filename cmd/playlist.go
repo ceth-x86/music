@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"sync"
 
@@ -25,6 +27,7 @@ import (
 
 var Service string
 var Id string
+var Filename string
 
 // addPlaylistCmd represents the addPlaylist command
 var playistCmd = &cobra.Command{
@@ -122,6 +125,45 @@ var listPlaylistCommand = &cobra.Command{
 	},
 }
 
+var exportPlaylistCommand = &cobra.Command{
+	Use:   "export",
+	Short: "Export playlists",
+	Long: `Examples:
+		playlist export --filename playlists.json
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		logger := zap.NewExample().Sugar()
+		defer func() {
+			_ = logger.Sync()
+		}()
+
+		logger.Infow("ezport playlists")
+
+		settings := settings2.InitSettings()
+		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
+		}
+
+		repository := datastore.NewPlaylistRepository(db)
+		playlists := repository.Fetch()
+
+		data, err := json.Marshal(playlists)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("Error playlists to JSON serialization")
+			return
+		}
+
+		err = ioutil.WriteFile(Filename, data, 0644)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("Error saving playlist to file")
+		}
+
+		fmt.Println("done")
+	},
+}
+
 var syncPlaylistCommand = &cobra.Command{
 	Use:   "sync",
 	Short: "Sync playlists",
@@ -210,6 +252,10 @@ func init() {
 
 	playistCmd.AddCommand(syncPlaylistCommand)
 	syncPlaylistCommand.Flags().StringVarP(&Id, "id", "i", "", "Playlist id")
+
+	playistCmd.AddCommand(exportPlaylistCommand)
+	exportPlaylistCommand.Flags().StringVarP(&Filename, "filename", "f", "playlist.json", "Filename")
+	_ = exportPlaylistCommand.MarkFlagRequired("filename")
 
 	playistCmd.AddCommand(listPlaylistCommand)
 }
