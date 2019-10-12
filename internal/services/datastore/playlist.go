@@ -1,7 +1,11 @@
 package datastore
 
 import (
+	"context"
 	"errors"
+	"time"
+
+	"github.com/jackc/pgx/v4"
 
 	"github.com/demas/music/internal/models/core"
 	"github.com/demas/music/internal/models/db"
@@ -9,19 +13,21 @@ import (
 )
 
 type IPlaylistRepository interface {
-	Fetch() []*core.Playlist
+	Fetch() ([]*core.Playlist, error)
 	GetById(id uint) (*core.Playlist, error)
 	Store(p *core.Playlist) (*core.Playlist, error)
 	Update(id uint, p *core.Playlist) (*core.Playlist, error)
 }
 
 type PlaylistRepository struct {
-	db *gorm.DB
+	db   *gorm.DB
+	conn *pgx.Conn
 }
 
-func NewPlaylistRepository(dbHandler *gorm.DB) *PlaylistRepository {
+func NewPlaylistRepository(dbHandler *gorm.DB, conn *pgx.Conn) *PlaylistRepository {
 	return &PlaylistRepository{
-		db: dbHandler,
+		db:   dbHandler,
+		conn: conn,
 	}
 }
 
@@ -35,11 +41,44 @@ func setPlaylistFields(p db.Playlist, playlist *core.Playlist) db.Playlist {
 	return p
 }
 
-func (r *PlaylistRepository) Fetch() []*core.Playlist {
+func (r *PlaylistRepository) Fetch() ([]*core.Playlist, error) {
 
+	var sql = "select id, service, playlist_id, name, description, last_changed from playlists where deleted_at is null order by id"
 	var result []*core.Playlist
-	r.db.Where("deleted_at is null").Find(&result)
-	return result
+
+	rows, err := r.conn.Query(context.Background(), sql)
+	if err != nil {
+		return result, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+
+		var (
+			id          uint
+			service     uint
+			playlistId  string
+			name        string
+			description string
+			lastChanged *time.Time
+		)
+
+		err = rows.Scan(&id, &service, &playlistId, &name, &description, &lastChanged)
+		if err != nil {
+			return result, err
+		}
+
+		playlist := new(core.Playlist)
+		playlist.Id = id
+		playlist.Service = service
+		playlist.PlaylistId = playlistId
+		playlist.Name = name
+		playlist.Description = description
+		playlist.LastChanged = lastChanged
+		result = append(result, playlist)
+	}
+
+	return result, nil
 }
 
 func (r *PlaylistRepository) GetById(id uint) (*core.Playlist, error) {

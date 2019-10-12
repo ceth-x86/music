@@ -39,7 +39,7 @@ var listReleaseCommand = &cobra.Command{
 		logger.Infow("show list of releases")
 
 		settings := settings2.InitSettings()
-		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		db, _, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
 		}

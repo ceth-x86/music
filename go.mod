@@ -8,7 +8,10 @@ require (
 	github.com/alexeyco/simpletable v0.0.0-20190222165044-2eb48bcee7cf
 	github.com/demas/yandexmusic v0.0.0-20191005082452-0a96b1d974ee
 	github.com/go-test/deep v1.0.3
+	github.com/jackc/pgx v3.6.0+incompatible
+	github.com/jackc/pgx/v4 v4.0.1
 	github.com/jinzhu/gorm v1.9.10
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/namsral/flag v1.7.4-pre
 	github.com/spf13/cobra v0.0.5

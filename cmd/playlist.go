@@ -53,7 +53,7 @@ var addPlaylistCommand = &cobra.Command{
 			"id", Id)
 
 		settings := settings2.InitSettings()
-		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		db, conn, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
 		}
@@ -63,7 +63,7 @@ var addPlaylistCommand = &cobra.Command{
 			logger.With(zap.Error(err)).Fatal("Не удалось определить музыкальный сервис")
 		}
 
-		repository := datastore.NewPlaylistRepository(db)
+		repository := datastore.NewPlaylistRepository(db, conn)
 		_, err = repository.Store(&core.Playlist{
 			Service:    uint(musicService),
 			PlaylistId: Id,
@@ -90,12 +90,12 @@ var listPlaylistCommand = &cobra.Command{
 		logger.Infow("show list of playlists")
 
 		settings := settings2.InitSettings()
-		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		db, conn, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
 		}
 
-		repository := datastore.NewPlaylistRepository(db)
+		repository := datastore.NewPlaylistRepository(db, conn)
 
 		table := simpletable.New()
 		table.Header = &simpletable.Header{
@@ -107,7 +107,12 @@ var listPlaylistCommand = &cobra.Command{
 				{Align: simpletable.AlignCenter, Text: "Description"},
 			}}
 
-		for _, playlist := range repository.Fetch() {
+		playlists, err := repository.Fetch()
+		if err != nil {
+			logger.With(zap.Error(err)).Error("Could not retrieve playlists from database")
+		}
+
+		for _, playlist := range playlists {
 			r := []*simpletable.Cell{
 				{Text: fmt.Sprintf("%d", playlist.Id)},
 				{Align: simpletable.AlignCenter, Text: enums.MusicService(playlist.Service).String()},
@@ -139,12 +144,12 @@ var syncPlaylistCommand = &cobra.Command{
 		logger.Infow("Sync playlist")
 
 		settings := settings2.InitSettings()
-		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		db, conn, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
 		}
 
-		repository := repository2.NewRepository(db)
+		repository := repository2.NewRepository(db, conn)
 		engine := engine2.Engine{DataRepository: repository}
 		var albums uint = 0
 		var singles uint = 0
@@ -182,7 +187,12 @@ var syncPlaylistCommand = &cobra.Command{
 				}
 			}()
 
-			for _, playlist := range repository.PlaylistRepository.Fetch() {
+			playlists, err := repository.PlaylistRepository.Fetch()
+			if err != nil {
+				logger.With(zap.Error(err)).Error("Could not retrieve playlists from database")
+			}
+
+			for _, playlist := range playlists {
 				id := playlist.Id
 				wg.Add(1)
 				go func() {
