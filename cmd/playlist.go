@@ -146,13 +146,16 @@ var exportPlaylistCommand = &cobra.Command{
 		logger.Infow("ezport playlists")
 
 		settings := settings2.InitSettings()
-		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		db, conn, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
 		}
 
-		repository := datastore.NewPlaylistRepository(db)
-		playlists := repository.Fetch()
+		repository := datastore.NewPlaylistRepository(db, conn)
+		playlists, err := repository.Fetch()
+		if err != nil {
+			logger.With(zap.Error(err)).Error("Error fetching playlists from database")
+		}
 
 		data, err := json.Marshal(playlists)
 		if err != nil {
