@@ -138,12 +138,12 @@ var exportPlaylistCommand = &cobra.Command{
 			_ = logger.Sync()
 		}()
 
-		logger.Infow("ezport playlists")
+		logger.Infow("export playlists")
 
 		settings := settings2.InitSettings()
 		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
 		if err != nil {
-			logger.With(zap.Error(err)).Error("не удалось установить соединение с PostgreSQL")
+			logger.With(zap.Error(err)).Error("не удалось установить соединение с Postgres")
 		}
 
 		repository := datastore.NewPlaylistRepository(db)
@@ -158,6 +158,59 @@ var exportPlaylistCommand = &cobra.Command{
 		err = ioutil.WriteFile(Filename, data, 0644)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("Error saving playlist to file")
+		}
+
+		fmt.Println("done")
+	},
+}
+
+var importPlaylistCommand = &cobra.Command{
+	Use:   "import",
+	Short: "Import playlists",
+	Long: `Examples:
+		playlist import --filename playlists.json
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		logger := zap.NewExample().Sugar()
+		defer func() {
+			_ = logger.Sync()
+		}()
+
+		logger.Infow("import playlists")
+
+		settings := settings2.InitSettings()
+		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("не удалось установить соединение с Postgres")
+			return
+		}
+
+		repository := datastore.NewPlaylistRepository(db)
+
+		data, err := ioutil.ReadFile(Filename)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("Error loading playlists from JSON file")
+			return
+		}
+
+		var playlists []core.Playlist
+		err = json.Unmarshal(data, &playlists)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("Error deserializing playlists from JSON")
+			return
+		}
+
+		for _, playlist := range playlists {
+
+			_, err = repository.Store(&core.Playlist{
+				Service:    playlist.Service,
+				PlaylistId: playlist.PlaylistId,
+			})
+
+			if err != nil {
+				logger.With(zap.Error(err)).Error("Error saving playlist")
+			}
 		}
 
 		fmt.Println("done")
@@ -256,6 +309,10 @@ func init() {
 	playistCmd.AddCommand(exportPlaylistCommand)
 	exportPlaylistCommand.Flags().StringVarP(&Filename, "filename", "f", "playlist.json", "Filename")
 	_ = exportPlaylistCommand.MarkFlagRequired("filename")
+
+	playistCmd.AddCommand(importPlaylistCommand)
+	importPlaylistCommand.Flags().StringVarP(&Filename, "filename", "f", "playlist.json", "Filename")
+	_ = importPlaylistCommand.MarkFlagRequired("filename")
 
 	playistCmd.AddCommand(listPlaylistCommand)
 }

@@ -31,15 +31,17 @@ music releases list
 
 ### CLI commands
 
-| Command                     | Description             | Examples                                                   |
-| ----------------------------| ----------------------- | ---------------------------------------------------------- |
-| playlist add                | Add playlist            | playlist add --service spotify --id 37i9dQZF1DXcF6B6QPhFDv | 
-|                             |                         | playlist add --service yandex --id 1001                    |
-| playlist list               | Show list of playlists  | playlist list                                              |
-| playlist sync               | Sync playlists          | playlist sync                                              |
-| playlist sync --id 4        | Sync playlist           | playlist sync --id 4                                       |
-| release list                | Show list of releases   | release list, release list --type album                    |
-| release list --type album   | Show list of new albums | release list --type album                                  |
+| Command                     | Description              | Examples                                                   |
+| ----------------------------| ------------------------ | ---------------------------------------------------------- |
+| playlist add                | Add playlist             | playlist add --service spotify --id 37i9dQZF1DXcF6B6QPhFDv | 
+|                             |                          | playlist add --service yandex --id 1001                    |
+| playlist list               | Show list of playlists   | playlist list                                              |
+| playlist sync               | Sync playlists           | playlist sync                                              |
+|                             |                          | playlist sync --id 4                                       |
+| release list                | Show list of releases    | release list                                               |
+|                             |                          | release list --type album                                  |
+| playlist export             | Export list of playlists | playlist export --filename playlists.json                  | 
+| playlist import             | Import list of playlists | playlist import --filename playlist.json                   |
 
 ## Roadmap
 
