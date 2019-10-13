@@ -188,13 +188,13 @@ var importPlaylistCommand = &cobra.Command{
 		logger.Infow("import playlists")
 
 		settings := settings2.InitSettings()
-		db, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
+		db, conn, err := dbutils.OpenDbConnection(settings.DbConnectionString, settings.TraceSqlCommand)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("не удалось установить соединение с Postgres")
 			return
 		}
 
-		repository := datastore.NewPlaylistRepository(db)
+		repository := datastore.NewPlaylistRepository(db, conn)
 
 		data, err := ioutil.ReadFile(Filename)
 		if err != nil {
