@@ -81,8 +81,13 @@ func (d *PlaylistDownloader) processTrack(track *core.Track) {
 			d.Logger.With(zap.Error(err)).Errorw("при поиске альбома в Spotify произошла ошибка",
 				"Artist", track.ServiceArtistName,
 				"Album", track.ServiceAlbumName)
+		} else if len(albums) == 0 {
+			d.Logger.Errorw("при поиске альбома в Spotify ничего не удалось найти",
+				"Artist", track.ServiceArtistName,
+				"Album", track.ServiceAlbumName)
 		}
 
+		// TODO: skip if don't have album
 		masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
 		if masterAlbum == nil {
 

@@ -8,20 +8,25 @@ import (
 	"go.uber.org/zap"
 )
 
+// any playlists provider
 type IMusicService interface {
 	DownloadPlaylist(playlistId string) (*core.Playlist, []*core.Track, error)
 }
 
+// master data repository - we need to have one source of truth
 type IMasterDataRepository interface {
-	DownloadAlbum(albumId string) (*core.Album, error)
-	DownloadArtist(artistId string) (*core.Artist, error)
-	SearchAlbum(artist string, album string) ([]*core.Album, error)
+	SearchAlbum(artist string, album string) ([]*core.Album, error) // search album by artist and album name (we get them from playlists)
+	DownloadArtist(artistId string) (*core.Artist, error)           // get artist by music service artist ID
+	DownloadAlbum(albumId string) (*core.Album, error)              // get album by music service album ID
 }
 
+// I have only one MasterData provider (may be in the future I'll add LastFM)
 func NewMusicRepository() IMasterDataRepository {
 	return spotify2.NewSpotify()
 }
 
+// I have two playlists providers: Spotify and Yandex.Music
+// I am planning to add Deezer
 func NewMusicService(service uint) IMusicService {
 
 	logger := zap.NewExample().Sugar()
