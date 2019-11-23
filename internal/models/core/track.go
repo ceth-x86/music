@@ -1,14 +1,16 @@
 package core
 
+// created during playlist synchronization process (`playlist sync`)
 type Track struct {
 	Id         uint
-	PlaylistId uint
-	Name       string
-	TrackId    string
-	ArtistId   uint
-	AlbumId    uint
+	PlaylistId uint   // playlist ID in the database
+	Name       string // track name (music service)
+	TrackId    string // track ID (music service)
+	ArtistId   uint   // artist ID (database)
+	AlbumId    uint   // album ID (database)
 
-	MasterData        bool
+	// calculated columns
+	MasterData        bool // true if the track belongs to Spotify playlist (MasterData)
 	ServiceArtistId   string
 	ServiceAlbumId    string
 	ServiceArtistName string

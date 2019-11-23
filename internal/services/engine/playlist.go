@@ -182,6 +182,7 @@ func (d *PlaylistDownloader) Download(playlistId uint) *DownloadResult {
 		d.Logger.With(zap.Error(err)).Error(err)
 	}
 
+	// TODO: refactore - PlaylistWasUpdated изменяется как то слишком неявно
 	d.PlaylistWasUpdated = false
 	for _, track := range tracks {
 		track.PlaylistId = playlistId
