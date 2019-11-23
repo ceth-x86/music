@@ -25,6 +25,7 @@ type PlaylistDownloader struct {
 	PlaylistWasUpdated bool
 }
 
+// Download playlist from music service
 func (e *Engine) PlaylistDownloader() *PlaylistDownloader {
 	return &PlaylistDownloader{
 		Engine:          e,
@@ -67,47 +68,57 @@ func (d *PlaylistDownloader) chooseAlbumFromSearchResults(albums []*core.Album, 
 	return nil
 }
 
-func (d *PlaylistDownloader) processTrack(track *core.Track) {
+func (d *PlaylistDownloader) findArtistAndAlbum(track *core.Track) {
 
-	if !track.MasterData {
-
-		missingReleases := d.Engine.DataRepository.MissingReleaseRepository.FindByAlbumAndArtist(track.ServiceAlbumName, track.ServiceArtistName)
-		if len(missingReleases) != 0 {
-			return
-		}
-
-		albums, err := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
-		if err != nil {
-			d.Logger.With(zap.Error(err)).Errorw("при поиске альбома в Spotify произошла ошибка",
-				"Artist", track.ServiceArtistName,
-				"Album", track.ServiceAlbumName)
-		} else if len(albums) == 0 {
-			d.Logger.Errorw("при поиске альбома в Spotify ничего не удалось найти",
-				"Artist", track.ServiceArtistName,
-				"Album", track.ServiceAlbumName)
-		}
-
-		// TODO: skip if don't have album
-		masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
-		if masterAlbum == nil {
-
-			_, err = d.Engine.DataRepository.MissingReleaseRepository.Store(&core.MissingRelease{
-				ArtistName: track.ServiceArtistName,
-				AlbumName:  track.ServiceAlbumName,
-			})
-
-			if err != nil {
-				d.Logger.With(zap.Error(err)).Error("при сохранении MissingRelease произошла ошибка")
-			}
-
-			return
-		}
-
-		track.ServiceArtistId = masterAlbum.ArtistMasterId
-		track.ServiceAlbumId = masterAlbum.AlbumId
+	missingReleases := d.Engine.DataRepository.MissingReleaseRepository.FindByAlbumAndArtist(track.ServiceAlbumName, track.ServiceArtistName)
+	if len(missingReleases) != 0 {
+		return // we already have this track in the list of tracks which we couldn't find
 	}
 
-	_, err := d.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
+	albums, err := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
+	if err != nil {
+		d.Logger.With(zap.Error(err)).Errorw("при поиске альбома в MasterDataRepository произошла ошибка",
+			"Artist", track.ServiceArtistName,
+			"Album", track.ServiceAlbumName)
+	} else if len(albums) == 0 {
+		d.Logger.Errorw("при поиске альбома в MasterDataRepository ничего не удалось найти",
+			"Artist", track.ServiceArtistName,
+			"Album", track.ServiceAlbumName)
+	}
+
+	// TODO: skip if don't have album
+	masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
+	if masterAlbum == nil {
+
+		_, err = d.Engine.DataRepository.MissingReleaseRepository.Store(&core.MissingRelease{
+			ArtistName: track.ServiceArtistName,
+			AlbumName:  track.ServiceAlbumName,
+		})
+
+		if err != nil {
+			d.Logger.With(zap.Error(err)).Error("при сохранении MissingRelease произошла ошибка")
+		}
+
+		return
+	}
+
+	track.ServiceArtistId = masterAlbum.ArtistMasterId
+	track.ServiceAlbumId = masterAlbum.AlbumId
+}
+
+func (d *PlaylistDownloader) processTrack(track *core.Track) {
+
+	err := track.Validate()
+	if err != nil {
+		d.Logger.With(zap.Error(err)).Errorw("incorrect track")
+		return
+	}
+
+	if !track.MasterData {
+		d.findArtistAndAlbum(track)
+	}
+
+	_, err = d.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
 	if err != nil {
 
 		// artist

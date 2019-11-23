@@ -1,5 +1,7 @@
 package core
 
+import "errors"
+
 // created during playlist synchronization process (`playlist sync`)
 type Track struct {
 	Id         uint
@@ -15,4 +17,13 @@ type Track struct {
 	ServiceAlbumId    string
 	ServiceArtistName string
 	ServiceAlbumName  string
+}
+
+func (t *Track) Validate() error {
+
+	if !t.MasterData && (t.ServiceArtistName == "" || t.ServiceAlbumName == "") {
+		return errors.New("missing ServiceArtistName or ServiceAlbumName")
+	}
+
+	return nil
 }
