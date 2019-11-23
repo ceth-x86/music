@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/demas/music/internal/services/datastore/repository"
@@ -58,54 +57,6 @@ func (d *PlaylistDownloader) createRelease(album *core.Album, track *core.Track)
 	}
 }
 
-func (d *PlaylistDownloader) chooseAlbumFromSearchResults(albums []*core.Album, artistName string, albumName string) *core.Album {
-
-	for _, candidate := range albums {
-		if candidate.ReleaseDateString[0:4] == fmt.Sprintf("%v", time.Now().Year()) {
-			return candidate
-		}
-	}
-	return nil
-}
-
-func (d *PlaylistDownloader) findArtistAndAlbum(track *core.Track) {
-
-	missingReleases := d.Engine.DataRepository.MissingReleaseRepository.FindByAlbumAndArtist(track.ServiceAlbumName, track.ServiceArtistName)
-	if len(missingReleases) != 0 {
-		return // we already have this track in the list of tracks which we couldn't find
-	}
-
-	albums, err := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
-	if err != nil {
-		d.Logger.With(zap.Error(err)).Errorw("при поиске альбома в MasterDataRepository произошла ошибка",
-			"Artist", track.ServiceArtistName,
-			"Album", track.ServiceAlbumName)
-	} else if len(albums) == 0 {
-		d.Logger.Errorw("при поиске альбома в MasterDataRepository ничего не удалось найти",
-			"Artist", track.ServiceArtistName,
-			"Album", track.ServiceAlbumName)
-	}
-
-	// TODO: skip if don't have album
-	masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
-	if masterAlbum == nil {
-
-		_, err = d.Engine.DataRepository.MissingReleaseRepository.Store(&core.MissingRelease{
-			ArtistName: track.ServiceArtistName,
-			AlbumName:  track.ServiceAlbumName,
-		})
-
-		if err != nil {
-			d.Logger.With(zap.Error(err)).Error("при сохранении MissingRelease произошла ошибка")
-		}
-
-		return
-	}
-
-	track.ServiceArtistId = masterAlbum.ArtistMasterId
-	track.ServiceAlbumId = masterAlbum.AlbumId
-}
-
 func (d *PlaylistDownloader) processTrack(track *core.Track) {
 
 	err := track.Validate()
@@ -115,7 +66,16 @@ func (d *PlaylistDownloader) processTrack(track *core.Track) {
 	}
 
 	if !track.MasterData {
-		d.findArtistAndAlbum(track)
+		masterData := &MasterData{
+			Engine:          d.Engine,
+			Logger:          d.Logger,
+			MusicRepository: d.MusicRepository,
+		}
+
+		err = masterData.findArtistAndAlbum(track)
+		if err != nil {
+			return
+		}
 	}
 
 	_, err = d.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
