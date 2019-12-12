@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/demas/music/internal/services/datastore/repository"
@@ -25,6 +24,7 @@ type PlaylistDownloader struct {
 	PlaylistWasUpdated bool
 }
 
+// Download playlist from music service
 func (e *Engine) PlaylistDownloader() *PlaylistDownloader {
 	return &PlaylistDownloader{
 		Engine:          e,
@@ -57,52 +57,28 @@ func (d *PlaylistDownloader) createRelease(album *core.Album, track *core.Track)
 	}
 }
 
-func (d *PlaylistDownloader) chooseAlbumFromSearchResults(albums []*core.Album, artistName string, albumName string) *core.Album {
-
-	for _, candidate := range albums {
-		if candidate.ReleaseDateString[0:4] == fmt.Sprintf("%v", time.Now().Year()) {
-			return candidate
-		}
-	}
-	return nil
-}
-
 func (d *PlaylistDownloader) processTrack(track *core.Track) {
 
-	if !track.MasterData {
-
-		missingReleases := d.Engine.DataRepository.MissingReleaseRepository.FindByAlbumAndArtist(track.ServiceAlbumName, track.ServiceArtistName)
-		if len(missingReleases) != 0 {
-			return
-		}
-
-		albums, err := d.MusicRepository.SearchAlbum(track.ServiceArtistName, track.ServiceAlbumName)
-		if err != nil {
-			d.Logger.With(zap.Error(err)).Errorw("при поиске альбома в Spotify произошла ошибка",
-				"Artist", track.ServiceArtistName,
-				"Album", track.ServiceAlbumName)
-		}
-
-		masterAlbum := d.chooseAlbumFromSearchResults(albums, track.ServiceArtistName, track.ServiceAlbumName)
-		if masterAlbum == nil {
-
-			_, err = d.Engine.DataRepository.MissingReleaseRepository.Store(&core.MissingRelease{
-				ArtistName: track.ServiceArtistName,
-				AlbumName:  track.ServiceAlbumName,
-			})
-
-			if err != nil {
-				d.Logger.With(zap.Error(err)).Error("при сохранении MissingRelease произошла ошибка")
-			}
-
-			return
-		}
-
-		track.ServiceArtistId = masterAlbum.ArtistMasterId
-		track.ServiceAlbumId = masterAlbum.AlbumId
+	err := track.Validate()
+	if err != nil {
+		d.Logger.With(zap.Error(err)).Errorw("incorrect track")
+		return
 	}
 
-	_, err := d.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
+	if !track.MasterData {
+		masterData := &MasterData{
+			Engine:          d.Engine,
+			Logger:          d.Logger,
+			MusicRepository: d.MusicRepository,
+		}
+
+		err = masterData.findArtistAndAlbum(track)
+		if err != nil {
+			return
+		}
+	}
+
+	_, err = d.DataRepository.TrackRepository.GetByPlaylistAndTrackId(track.PlaylistId, track.TrackId)
 	if err != nil {
 
 		// artist
@@ -182,6 +158,7 @@ func (d *PlaylistDownloader) Download(playlistId uint) *DownloadResult {
 		d.Logger.With(zap.Error(err)).Error(err)
 	}
 
+	// TODO: refactore - PlaylistWasUpdated изменяется как то слишком неявно
 	d.PlaylistWasUpdated = false
 	for _, track := range tracks {
 		track.PlaylistId = playlistId

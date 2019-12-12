@@ -11,6 +11,12 @@ import (
 func (s *Spotify) SearchAlbum(artist string, album string) ([]*core.Album, error) {
 
 	searchResult, err := s.Client.Search(artist+" "+album, spotify.SearchTypeAlbum)
+
+	// retry search one time if we have an error
+	if err != nil {
+		searchResult, err = s.Client.Search(artist+" "+album, spotify.SearchTypeAlbum)
+	}
+
 	if err != nil {
 		return nil, err
 	}
